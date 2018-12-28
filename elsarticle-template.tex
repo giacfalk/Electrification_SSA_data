@@ -19,7 +19,7 @@
 
 \modulolinenumbers[5]
 
-\journal{Environmental Research Letters}
+\journal{x}
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Elsevier bibliography styles
@@ -59,7 +59,7 @@
 
 \begin{frontmatter}
 
-\title{A High-Resolution, Updatable, Fully-Reproducible Gridded Dataset to Assess Recent Progress towards Electrification in Sub-Saharan Africa}
+\title{A High-Resolution, Updatable, Fully-Reproducible Gridded Dataset to Assess Progress towards Electrification in Sub-Saharan Africa}
 
 %% or include affiliations in footnotes:
 \author[uno,due]{Giacomo Falchetta}
@@ -76,16 +76,13 @@
 \address[due]{International Institute for Applied Systems Analysis, Schossplatz 1, Laxenburg, Austria}
 
 \begin{abstract}
-We present a new, updatable, fully-reproducible $1 km^2$ resolution electrification dataset for Sub-Saharan Africa built on gridded nighttime light, population, and land cover data. Using the data, we assess progress towards universal access to electricity - a pillar of Sustainable Development Goal 7 - over the 2014-2018 period throughout Sub-Saharan Africa. Our estimates are generally consistent with both field survey-based province-level electrification rates and aggregated national-level figures published yearly by international organizations like the World Bank. Province-level electrification rates - including user-generated custom results - are accessible in an ad-hoc developed open-source dynamic interface. We employ the spatially explicit results to calculate the index of Gini inequality in electricity access between provinces of each country in 2014 and 2018 and the change over such period, and we plot Lorenz curves to visualize inequality. Since a binary measure of access only provides limited insight, we also  define tiers of per-capita light intensity separately for urban and peri-urban and rural areas, and we estimate the by-tier split of consumers living in electrified areas. Hotspots of (latent) demand are then identified. We conclude discussing the implications of inequality, including the large gap that might remain in terms of latent demand even under a scenario of full electrification by 2030. 
+We present a new, updatable, fully-reproducible $1 km^2$ resolution electrification dataset for Sub-Saharan Africa built on gridded nighttime light, population, and land cover data. Using the data, we assess progress towards universal access to electricity - a pillar of Sustainable Development Goal 7 - over the 2014-2018 period throughout Sub-Saharan Africa. Our estimates are generally consistent with both field survey-based province-level electrification rates and aggregated national-level figures published yearly by international organizations like the World Bank. Province-level electrification rates - including user-generated custom results - are accessible in an ad-hoc developed open-source dynamic interface. We employ the spatially explicit results to calculate the index of Gini inequality in electricity access between provinces of each country in 2014 and 2018 and the change over such period, and we plot Lorenz curves to visualize inequality. Since a binary measure of access only provides limited insight, we also  define tiers of per-capita light intensity separately for densely populated urban areas and and other areas, and we estimate the by-tier split of consumers living in electrified areas. Hotspots of (latent) demand are then identified. We conclude discussing the implications of inequality, including the large gap that might remain in terms of latent demand even under a scenario of full electrification by 2030. 
 \end{abstract}
 
 
 \begin{keyword}
 Open-source, Electricity access, SDG 7, inequality, remote sensing, Sub-Saharan Africa \newline
 Word count: x,xxx 
-\blfootnote{
-\noindent
-Declarations of interest: none}
 \end{keyword}
 \end{frontmatter}
 \linenumbers
@@ -106,7 +103,7 @@ We find that our results are generally consistent with both field survey-based p
 \section{Methods}
 The key raw data sources include VIIRS stray-light corrected monthly composites 2014-2018 \citep{baugh2013nighttime}, LandScan 2014 and 2017 downscaled gridded population \citep{dobson2000landscan} (and WorldPop 2015 and 2020 \citep{tatem2017worldpop} for a comparative check) which are UN-projections-consistent and account  for rapid demographics and migration (on average 4.1\% urban population growth vs. 2.7\% population growth in SSA in 2017 according to the World Bank). National electricity access rates are drawn from the ESMAP/World Bank tracking SDG7 portal \citep{banerjee2013global} and from the IEA Access Database \citep{iea_world_2018} (and previous versions), while province-level figures are drawn from survey data through the DHS Program STATcompiler and further national statistics officices for sub-national benchmarking. For defining countries, we adopted the global administrative boundaries (GADM) dataset v3.6 as the standard. For identifying urban and peri-urban/rural settlements we used the MCD12Q1 V6 MODIS Land Cover Type \citep{friedl2015mcd12q1} from the Annual University of Maryland (UMD) classification\footnote{For urban areas LC-type 13 (urban and built-up lands) is used in combination with a population higher than 2500 inhab./cell, while for rural settlements the remainder of the LC-types was considered. The approach results in a generally consistent estimate ($R^2 = 0.70$ and 0.08 residual standard error in a simple linear regression) vis-à-vis the World Bank reported urban-rural population split for 2017. Refer to figure in the Supplementary Material section.} 
 
-The Google Earth Engine platform \citep{gorelick2017google} has been used to process spatially-explicit imagery and extract data which has subsequently been used to calculate trends, inequality, and to produce plots. The Additional materials section links to the GitHub repository that hosts both Earth Engine Javascript code and R script and allows 1:1 results reproduction, alteration of parameters for further sensitivity analysis, or further improvements. Results are also dynamically visualisable in an ad-hoc created web interface, under \url{electrificationmapping.shinyapps.io}. User-generated results can be also inputted in the interface, the source code of which is hosted on \url{github.com/giacfalk/Electricity-Inequality-SSA/interface}.
+The Google Earth Engine platform \citep{gorelick2017google} has been used to process spatially-explicit imagery and extract data which has subsequently been used to calculate trends, inequality, and to produce plots. The Data Access section links to the repository that hosts both Earth Engine Javascript code and R script and allows 1:1 results reproduction, alteration of parameters for further sensitivity analysis, or further improvements. Results are also dynamically visualisable in an ad-hoc created web interface, under \url{http://electrificationmapping.shinyapps.io}. User-generated results can be also inputted in the interface, the source code of which is hosted on \url{https://github.com/giacfalk/Electrification_SSA_data/interface}.
 
 Within the Earth Engine platform, the median value within each pixel of the VIIRS monthly composites has been calculated for both 2014 and 2018; a lower-bound noise floor has been set to $0.25 \mu W \cdot cm^{-2} \cdot sr^{-1}$ for 2014 and to $0.35 \mu W \cdot cm^{-2} \cdot sr^{-1}$ for 2018\footnote{The discrepancy in the noise caps is justified form the increased noisiness of the data witnessed from 2017, in all likelihood due to the alteration of a sensitivity parameter in the processing algorithm. The spread in the noise lower-bound cap has been determined from the examination of by-definition zero radiance pixels - such as within large water bodies - which nonetheless present a systematically positive radiance for data form 2017 onwards and a systematically zero radiance for previous data.} to remove calibration noise and emphimeral lights as discussed in the relevant literature \citep{roman_holidays_2015, levin_global_2017}; population counts within each GADM level 1 provinces have been produced for both people living in lit (above $0.25 \mu W \cdot cm^{-2} \cdot sr^{-1}$)  and in dark areas. Such figures have been used to calculate electrification rates at the province level, and aggregating those at the country level. 
 
@@ -217,10 +214,10 @@ Lorenz curves provide a further insight into the within-country inequality in el
 \subsection{Inequality in residential consumption}
 Settlements detected as lit are not necessarily implying a situation of 100\% local electrification, nor that all households are benefiting from the same level of access \citep{riva_merry-go-round_2018}. Here we use the four per-capita light categories (defined as described in Methods) as proxy of electricity residential consumption. We then sum for each province the population that is estimated to have access above/below each tier, a measure that goes beyond the binary access/no-access metric.
 
-Figure \ref{residential consumption_inequality} shows the within-country split of people living in areas within each per-capita residential consumption category, as defined in the Methods section in rural and urban areas\footnote{Rural and urban areas identification strategy is described in the Methods section}, respectively.
+Figure \ref{residential_consumption_inequality consumption_inequality} shows the within-country split of people living in areas within each per-capita residential consumption category, as defined in the Methods section in rural and urban areas\footnote{Rural and urban areas identification strategy is described in the Methods section}, respectively.
 
 \begin{figure}[H]
-    \label{residential consumption_inequality}
+    \label{residential_consumption_inequality}
     \centering
     \subfloat[Rural and peri-urban areas ]{{\includegraphics[scale=0.6]{figures/barplot_consumption_rur.png} }}%
     \qquad
@@ -269,7 +266,10 @@ Decentralised energy solutions are forecasted to be the least-cost option to bri
 
 Overall, we encourage electrification projects and monitoring initiatives to consider a broad array of aspects and implications of electrification, and not to exclusively focus on maximising electrification rates. In this sense, we have shown that high-resolution gridded data can be an effective, low-cost approach to keep track of electrification. 
 
-\section*{Supplementary material}
+\section*{Data Access}
+The latest version of the data, the code and guide for reproduction, and the interface source code are hosted at \url{https://github.com/giacfalk/Electrification_SSA_data}.
+
+\section*{Supplementary figures}
 \renewcommand{\thefigure}{A.\arabic{figure}}
 \setcounter{figure}{0}
 \subsection*{Validation of urban-rural areas distinction}
@@ -282,64 +282,21 @@ Overall, we encourage electrification projects and monitoring initiatives to con
 
 
 \subsection*{With WorldPop poplutation}
-
 \begin{figure}[H]
     \centering
-    \includegraphics{}
+    \includegraphics{figures/worldpop_validation.png}
     \caption{Province-level validation}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.7]{figures/barplot_wp.png}
+    \includegraphics[scale=0.7]{figures/worldpop_barplot.png}
     \caption{Electrification progress}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics{}
-    \caption{Consumption tiers split}
-\end{figure}
-
-
-\subsection*{+10\% noise floor}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics{}
-    \caption{Province-level validation}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[scale=0.7]{figures/barplot_plus10.png}
-    \caption{Electrification progress}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics{}
-    \caption{Consumption tiers split}
-\end{figure}
-
-
-\subsection*{-10\% noise floor}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics{}
-    \caption{Province-level validation}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[scale=0.7]{figures/barplot_minus10.png}
-    \caption{Electrification progress}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics{}
+    \includegraphics{figures/worldpop_barplot_cons.png}
     \caption{Consumption tiers split}
 \end{figure}
 
