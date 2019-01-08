@@ -1,0 +1,12 @@
+name: Electrification
+title: Electrification
+username:
+account: electrificationmapping
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 632037
+bundleId: 1803569
+url: https://electrificationmapping.shinyapps.io/Electrification/
+when: 1546979990.59906
+asMultiple: FALSE
+asStatic: FALSE
