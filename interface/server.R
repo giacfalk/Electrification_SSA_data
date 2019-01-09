@@ -27,8 +27,8 @@ server <- function(input,output, session){
       textsize = "16px",
       direction = "auto")) %>% 
     addPolygons(
-      group = "EL14",
-      fillColor = ~pal(elrate14),
+      group = "EL18",
+      fillColor = ~pal(elrate18),
       weight = 1,
       opacity = 1,
       color = "white",

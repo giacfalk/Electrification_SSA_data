@@ -5,8 +5,8 @@ account: electrificationmapping
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 632037
-bundleId: 1803569
+bundleId: 1804544
 url: https://electrificationmapping.shinyapps.io/Electrification/
-when: 1546979990.59906
+when: 1547030732.59586
 asMultiple: FALSE
 asStatic: FALSE

@@ -1,11 +1,12 @@
 //Earth Engine Script for: 
 //A High-Resolution, Updatable, Fully-Reproducible Gridded Dataset to Assess Recent Progress towardsElectrification in Sub-Saharan Africa
 //Giacomo Falchetta
-// Version: 04/01/18
+// Version: 09/01/18
 
-//Import VIIRS nighttime lights for 2018 and 2014
+//Import VIIRS nighttime lights for 2018 and 2014 (also 2016 for validaiton purposes)
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
 var nl14 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
+var nl16 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
 var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
 
 // Apply noise floors and select populated cells
@@ -20,6 +21,18 @@ var output = nl14.map(conditional);
 
 var nl14 = ee.ImageCollection(output).median()
 
+//2016
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl16.map(conditional);
+
+var nl16 = ee.ImageCollection(output).median()
+
+
 //2018
 var replacement = ee.Image(0);
     
@@ -32,16 +45,18 @@ var output = nl18.map(conditional);
 var nl18 = ee.ImageCollection(output).median()
 
 //Visualise data on the map 
-Map.addLayer(nl18)
-Map.addLayer(nl14)
+//Map.addLayer(nl18)
+//Map.addLayer(nl14)
 
 //Import population for both years (change these two line to change the population dataset)
 var pop14 = ee.Image('users/giacomofalchetta/landscan2014');
+var pop16 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 
 
 // Generate data for population without access for both years
 var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl14.lt(0.05)))
+var pop16_noaccess = pop14.mask(pop16.gt(0).and(nl16.lt(0.05)))
 var pop18_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.05)))
 
 // Import provinces shapefile
@@ -49,6 +64,11 @@ var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1');
 
 //Calculate sum of people without access by province
 var no_acc_14 = pop14_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+var no_acc_16 = pop16_noaccess.reduceRegions({
     reducer: ee.Reducer.sum(),
     collection: Countries,
 })
@@ -64,6 +84,15 @@ var no_acc_14 = no_acc_14.select(['.*'],null,false);
 Export.table.toDrive({
   collection: no_acc_14,
   description: 'no_acc_14',
+  folder: 'Inequality',
+  fileFormat: 'CSV',
+});   
+
+var no_acc_16 = no_acc_16.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_16,
+  description: 'no_acc_16',
   folder: 'Inequality',
   fileFormat: 'CSV',
 });   
@@ -84,6 +113,11 @@ var pop14 = pop14.reduceRegions({
     collection: Countries,
 });
 
+var pop16 = pop16.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
 var pop18 = pop18.reduceRegions({
     reducer: ee.Reducer.sum(),
     collection: Countries,
@@ -94,6 +128,15 @@ var pop14 = pop14.select(['.*'],null,false);
 Export.table.toDrive({
   collection: pop14,
   description: 'pop14',
+  folder: 'Inequality',
+  fileFormat: 'CSV'
+});   
+
+var pop16 = pop16.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop16,
+  description: 'pop16',
   folder: 'Inequality',
   fileFormat: 'CSV'
 });   
@@ -129,11 +172,11 @@ var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Fi
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
 var urbpop2 = pop18.mask(modis17.eq(13).or(pop18.gt(800)))
 
-var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN')));
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN'), ee.Filter.eq('ISO3', 'GNQ')));
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
 var urbpop3 = pop18.mask(modis17.eq(13).or(pop18.gt(1200)))
 
-var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN')));
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN'), ee.Filter.eq('ISO3', 'ERI')));
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
 var urbpop4 = pop18.mask(modis17.eq(13).or(pop18.gt(1500)))
 
@@ -156,11 +199,11 @@ var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Fi
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
 var rurpop2 = pop18.mask(pop18.lte(800).and(pop18.gt(0)))
 
-var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN')));
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN'), ee.Filter.eq('ISO3', 'GNQ')));
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
 var rurpop3 = pop18.mask(pop18.lte(1200).and(pop18.gt(0)))
 
-var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN')));
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN'),  ee.Filter.eq('ISO3', 'ERI')));
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
 var rurpop4 = pop18.mask(pop18.lte(1500).and(pop18.gt(0)))
 
@@ -291,7 +334,7 @@ Export.table.toDrive({
   fileFormat: 'CSV'
 });   
 
-var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN')));
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN'), ee.Filter.eq('ISO3', 'GNQ')));
 var pop14 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
 var pop14 = pop14.mask(modis17.eq(13).or(pop14.gt(1200)))
 
@@ -329,7 +372,7 @@ Export.table.toDrive({
   fileFormat: 'CSV'
 });   
 
-var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN')));
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN'), ee.Filter.eq('ISO3', 'ERI')));
 var pop14 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
 var pop14 = pop14.mask(modis17.eq(13).or(pop14.gt(1500)))
 
@@ -1042,14 +1085,13 @@ var lights14 = ee.ImageCollection(lights14).median()
 
 //
 
+var pop14 = ee.Image('users/giacomofalchetta/landscan2014');
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+
 var popnoaccess14 = pop14.mask(lights14.eq(0))
 var popnoaccess17 = pop17.mask(lights18.eq(0))
 
 var changeinpopnoaccess = popnoaccess17.subtract(popnoaccess14)
-
-var changeinpopnoaccess = changeinpopnoaccess.mask(changeinpopnoaccess.gt(25))
-
-Map.addLayer(changeinpopnoaccess)
 
 var changeinpopnoaccess = changeinpopnoaccess.reduceRegions({
     reducer: ee.Reducer.sum(),
@@ -1087,34 +1129,48 @@ Export.table.toDrive({
 
 
 ////
-
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1')
+var lights18 = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG').filterDate('2018-01-01', '2019-01-01').select('avg_rad');
 
 var replacement = ee.Image(0);
     
 var conditional = function(imm) {
-  return imm.where(imm.lt(0.30), replacement);
+  return imm.where(imm.lt(0.35), replacement);
 };
 
-var lights18 = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG').filterDate('2018-01-01', '2019-01-01').select('avg_rad');
 var lights18 = lights18.map(conditional);
+
+var conditional2 = function(imm) {
+  return imm.where(imm.gt(100), replacement);
+};
+
+var lights18 = lights18.map(conditional2);
+
 var lights18 = ee.ImageCollection(lights18).median()
 
 //
+var lights14 = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG').filterDate('2014-01-01', '2015-01-01').select('avg_rad');
+
+var replacement = ee.Image(0);
+    
 var conditional = function(imm) {
   return imm.where(imm.lt(0.25), replacement);
 };
 
-var lights14 = ee.ImageCollection('NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG').filterDate('2014-01-01', '2015-01-01').select('avg_rad');
 var lights14 = lights14.map(conditional);
+
+var conditional2 = function(imm) {
+  return imm.where(imm.gt(100), replacement);
+};
+
+var lights14 = lights14.map(conditional2);
+
 var lights14 = ee.ImageCollection(lights14).median()
 
 var changeinlight = (lights18.subtract(lights14)).divide(lights14)
 
-Map.addLayer(changeinlight)
-
 var changeinlight = changeinlight.reduceRegions({
-    reducer: ee.Reducer.mean(),
+    reducer: ee.Reducer.median(),
     collection: Countries,
     scale: 450
 })
@@ -1130,16 +1186,10 @@ Export.table.toDrive({
 });   
 
 ///
-
-var modis17 = ee.Image("MODIS/006/MCD12Q1/2017_01_01")
-var modis17 = modis17.select('LC_Type2')
-
-var isrural = modis17.neq(13).and(pop14.lt(250))
-
-var isrural = isrural.reduceRegions({
-    reducer: ee.Reducer.mean(),
+var isrural = rurpop.reduceRegions({
+    reducer: ee.Reducer.count(),
     collection: Countries,
-    scale: 450
+    scale: 1000
 })
 
 var isrural = isrural.select(['.*'],null,false);
@@ -1174,3 +1224,405 @@ Export.table.toDrive({
   folder: 'Inequality',
   fileFormat: 'CSV'
 });   
+
+
+//Calculate electrification rate in urban and rural areas, respectively 
+//Urban
+var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+var nl14 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
+var nl16 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
+var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
+
+// Apply noise floors and select populated cells
+//2014
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl14.map(conditional);
+
+var nl14 = ee.ImageCollection(output).median().mask(urbpop)
+
+//2016
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl16.map(conditional);
+
+var nl16 = ee.ImageCollection(output).median().mask(urbpop)
+
+
+//2018
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median().mask(urbpop)
+
+//Import population for both years (change these two line to change the population dataset)
+var pop14 = ee.Image('users/giacomofalchetta/landscan2014').mask(urbpop);
+var pop16 = ee.Image('users/giacomofalchetta/LandScanGlobal2016').mask(urbpop);
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').mask(urbpop);
+
+
+// Generate data for population without access for both years
+var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl14.lt(0.05)))
+var pop16_noaccess = pop14.mask(pop16.gt(0).and(nl16.lt(0.05)))
+var pop18_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.05)))
+
+// Import provinces shapefile
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1');
+
+//Calculate sum of people without access by province
+var no_acc_14 = pop14_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+var no_acc_16 = pop16_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+var no_acc_18 = pop18_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+//Export to Google Drive
+var no_acc_14 = no_acc_14.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_14,
+  description: 'no_acc_14_urb',
+  folder: 'Inequality',
+  fileFormat: 'CSV',
+});   
+
+var no_acc_16 = no_acc_16.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_16,
+  description: 'no_acc_16_urb',
+  folder: 'Inequality',
+  fileFormat: 'CSV',
+});   
+
+var no_acc_18 = no_acc_18.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_18,
+  description: 'no_acc_18_urb',
+  folder: 'Inequality',
+  fileFormat: 'CSV',
+});   
+
+
+//Calculate total population by province
+var pop14 = pop14.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
+var pop16 = pop16.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
+var pop18 = pop18.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
+var pop14 = pop14.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop14,
+  description: 'pop14_urb',
+  folder: 'Inequality',
+  fileFormat: 'CSV'
+});   
+
+var pop16 = pop16.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop16,
+  description: 'pop16_urb',
+  folder: 'Inequality',
+  fileFormat: 'CSV'
+});   
+
+var pop18 = pop18.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop18,
+  description: 'pop18_urb',
+  folder: 'Inequality',
+  fileFormat: 'CSV'
+});   
+
+//Rural
+var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+var nl14 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
+var nl16 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
+var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
+
+// Apply noise floors and select populated cells
+//2014
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl14.map(conditional);
+
+var nl14 = ee.ImageCollection(output).median().mask(rurpop)
+
+//2016
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl16.map(conditional);
+
+var nl16 = ee.ImageCollection(output).median().mask(rurpop)
+
+
+//2018
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median().mask(rurpop)
+
+//Import population for both years (change these two line to change the population dataset)
+var pop14 = ee.Image('users/giacomofalchetta/landscan2014').mask(rurpop);
+var pop16 = ee.Image('users/giacomofalchetta/LandScanGlobal2016').mask(rurpop);
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').mask(rurpop);
+
+
+// Generate data for population without access for both years
+var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl14.lt(0.05)))
+var pop16_noaccess = pop14.mask(pop16.gt(0).and(nl16.lt(0.05)))
+var pop18_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.05)))
+
+// Import provinces shapefile
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1');
+
+//Calculate sum of people without access by province
+var no_acc_14 = pop14_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+var no_acc_16 = pop16_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+var no_acc_18 = pop18_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+//Export to Google Drive
+var no_acc_14 = no_acc_14.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_14,
+  description: 'no_acc_14_rur',
+  folder: 'Inequality',
+  fileFormat: 'CSV',
+});   
+
+var no_acc_16 = no_acc_16.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_16,
+  description: 'no_acc_16_rur',
+  folder: 'Inequality',
+  fileFormat: 'CSV',
+});   
+
+var no_acc_18 = no_acc_18.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_18,
+  description: 'no_acc_18_rur',
+  folder: 'Inequality',
+  fileFormat: 'CSV',
+});   
+
+
+//Calculate total population by province
+var pop14 = pop14.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
+var pop16 = pop16.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
+var pop18 = pop18.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
+var pop14 = pop14.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop14,
+  description: 'pop14_rur',
+  folder: 'Inequality',
+  fileFormat: 'CSV'
+});   
+
+var pop16 = pop16.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop16,
+  description: 'pop16_rur',
+  folder: 'Inequality',
+  fileFormat: 'CSV'
+});   
+
+var pop18 = pop18.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop18,
+  description: 'pop18_rur',
+  folder: 'Inequality',
+  fileFormat: 'CSV'
+}); 
+
+// Export dataset 2014-2018
+var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop18_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.01))).clip(Countries)
+
+
+var nl18 =  imageCollection.filterDate('2017-01-01', '2018-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop17_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.01))).clip(Countries)
+
+var nl18 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2016');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop16_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.01))).clip(Countries)
+
+var nl18 =  imageCollection.filterDate('2015-01-01', '2016-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2015');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop15_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.01))).clip(Countries)
+
+var nl18 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop18 = ee.Image('users/giacomofalchetta/landscan2014');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop14_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.01))).clip(Countries)
+
+var pop_noaccess = ee.ImageCollection([pop14_noaccess, pop15_noaccess, pop16_noaccess, pop17_noaccess, pop18_noaccess])
+
+var stackCollection = function(collection) {
+  // Create an initial image.
+  var first = ee.Image(collection.first()).select([]);
+  // Write a function that appends a band to an image.
+  var appendBands = function(image, previous) {
+    return ee.Image(previous).addBands(image);
+  };
+  return ee.Image(collection.iterate(appendBands, first));
+};
+
+var stacked = stackCollection(pop_noaccess);
+
+Map.addLayer(stacked)
+
+Export.image.toDrive({
+  image: stacked,
+  description: 'pop_noaccess',
+  folder: 'Inequality',
+  scale: 1000,
+  maxPixels: 10e12, 
+  fileFormat: 'GeoTIFF',
+  crs : 'EPSG:4326'
+});

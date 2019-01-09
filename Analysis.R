@@ -1,10 +1,23 @@
 ##R Script for: 
 ##A High-Resolution, Updatable, Fully-Reproducible Gridded Dataset to Assess Recent Progress towardsElectrification in Sub-Saharan Africa
 ##Giacomo Falchetta
-## Version: 04/01/18
+## Version: 09/01/18
 
 ##This script must be ran after the Earth Engine (EE) javascript code. 
 #The googledrive package calls the files generated in EE. 
+
+#0) Generate NetCDF4 dataset
+library(raster)
+library(ncdf4)
+library(RNetCDF)
+
+drive_download("pop_noaccess-0000000000-0000014848.tif", type = "tif", overwrite = TRUE)
+data = stack("pop_noaccess-0000000000-0000014848.tif")
+
+names(data)<-c(2014:2018)
+
+writeRaster(data, "noaccess_SSA_2014_2018.nc", overwrite=TRUE, varname="Pop_no_access", varunit="n", 
+            longname="People_without_access", xname="Longitude",   yname="Latitude", zname="Year", force_v4=TRUE, compression=7)
 
 #1) Import data for populaiton and population without access
 library(googledrive)
@@ -236,7 +249,7 @@ barplot = ggplot(merged_diff_urb, aes(x=reorder(GID_0, -elrate_diff), y=elrate_d
   xlab("Country")+
   ylab("Change in urban electrificaiton rate (2014-2018)")
 
-ggsave("barplot_urban.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
+ggsave("barplot_urban.png", plot = barplot, device = "png", width = 30, height = 12.5, units = "cm", scale=0.8)
 
 #4) Calculate the total number of people without access in each country
 merged_noaccess = data.frame(merged_14_countrylevel$GID_0.x, merged_14_countrylevel$popnoacc,  merged_18_countrylevel$popnoacc)

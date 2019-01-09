@@ -1,3 +1,3 @@
 ui <- fluidPage(
-  leafletOutput("mymap",height = 1000)
+  leafletOutput("mymap", width = 1000)
 )
