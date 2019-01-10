@@ -1,7 +1,7 @@
 //Earth Engine Script for: 
 //A High-Resolution, Updatable, Fully-Reproducible Gridded Dataset to Assess Recent Progress towardsElectrification in Sub-Saharan Africa
 //Giacomo Falchetta
-// Version: 09/01/18
+// Version: 10/01/18
 
 //Import VIIRS nighttime lights for 2018 and 2014 (also 2016 for validaiton purposes)
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
@@ -1623,6 +1623,168 @@ Export.image.toDrive({
   folder: 'Inequality',
   scale: 1000,
   maxPixels: 10e12, 
+  fileFormat: 'GeoTIFF',
+  crs : 'EPSG:4326'
+});
+
+//export tiers to single image
+
+var modis17 = ee.Image("MODIS/006/MCD12Q1/2017_01_01")
+var modis17 = modis17.select('LC_Type2')
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'BWA'),  ee.Filter.eq('ISO3', 'GAB'), ee.Filter.eq('ISO3', 'AGO')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop0 = pop18.mask(pop18.lte(175).and(pop18.gt(0)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'NAM'), ee.Filter.eq('ISO3', 'ZMB'), ee.Filter.eq('ISO3', 'MRT'), ee.Filter.eq('ISO3', 'ZWE'), ee.Filter.eq('ISO3', 'MOZ'), ee.Filter.eq('ISO3', 'SOM'), ee.Filter.eq('ISO3', 'ZAF'), ee.Filter.eq('ISO3', 'CPV'), ee.Filter.eq('ISO3', 'SWZ')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop1 = pop18.mask(pop18.lte(650).and(pop18.gt(0)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'LSO'), ee.Filter.eq('ISO3', 'CMR'), ee.Filter.eq('ISO3', 'MDG'), ee.Filter.eq('ISO3', 'CAF'), ee.Filter.eq('ISO3', 'MLI'),ee.Filter.eq('ISO3', 'TZA')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop2 = pop18.mask(pop18.lte(800).and(pop18.gt(0)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN'), ee.Filter.eq('ISO3', 'GNQ')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop3 = pop18.mask(pop18.lte(1200).and(pop18.gt(0)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN'),  ee.Filter.eq('ISO3', 'ERI')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop4 = pop18.mask(pop18.lte(1500).and(pop18.gt(0)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'KEN'), ee.Filter.eq('ISO3', 'MWI'), ee.Filter.eq('ISO3', 'COD'), ee.Filter.eq('ISO3', 'TGO'), ee.Filter.eq('ISO3', 'NGA'), ee.Filter.eq('ISO3', 'TCD'), ee.Filter.eq('ISO3', 'SEN'), ee.Filter.eq('ISO3', 'NER'), ee.Filter.eq('ISO3', 'COG')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop5 = pop18.mask(pop18.lte(2500).and(pop18.gt(0)))
+
+//unify rural areas data
+var rurpop = ee.ImageCollection([rurpop0, rurpop1, rurpop2, rurpop3, rurpop4, rurpop5]).mosaic()
+
+var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
+
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1');
+
+var lightcapita18 = (nl18.divide(pop18)).multiply(100)
+
+var lightcapita18 = lightcapita18.mask(rurpop.gt(0).and(lightcapita18.gt(0)))
+
+//Input values defined in R as quartiles 
+var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.38)))
+var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.38)).and(lightcapita18.lt(0.66)))
+var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.66)).and(lightcapita18.lt(1.63)))
+var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(1.63)))
+
+var replacement = ee.Image(1);
+    
+var pop18_tier_1 =pop18_tier_2.where(pop18_tier_1.gt(1), replacement);
+
+var replacement = ee.Image(2);
+
+var pop18_tier_2 =pop18_tier_2.where(pop18_tier_2.gt(1), replacement);
+
+var replacement = ee.Image(3);
+
+var pop18_tier_3 =pop18_tier_3.where(pop18_tier_3.gt(1), replacement);
+
+var replacement = ee.Image(4);
+
+var pop18_tier_4 =pop18_tier_4.where(pop18_tier_4.gt(1), replacement);
+
+var tiers_joint_rural = ee.ImageCollection([pop18_tier_1, pop18_tier_2, pop18_tier_3, pop18_tier_4]).mosaic()
+
+Map.addLayer(tiers_joint_rural)
+
+///
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'BWA'),  ee.Filter.eq('ISO3', 'GAB'), ee.Filter.eq('ISO3', 'AGO')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop0 = pop18.mask(modis17.eq(13).or(pop18.gt(175)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'NAM'), ee.Filter.eq('ISO3', 'ZMB'), ee.Filter.eq('ISO3', 'MRT'), ee.Filter.eq('ISO3', 'ZWE'), ee.Filter.eq('ISO3', 'MOZ'), ee.Filter.eq('ISO3', 'SOM'), ee.Filter.eq('ISO3', 'ZAF'), ee.Filter.eq('ISO3', 'CPV'), ee.Filter.eq('ISO3', 'SWZ')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop1 = pop18.mask(modis17.eq(13).or(pop18.gt(650)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'LSO'), ee.Filter.eq('ISO3', 'CMR'), ee.Filter.eq('ISO3', 'MDG'), ee.Filter.eq('ISO3', 'CAF'), ee.Filter.eq('ISO3', 'MLI'),ee.Filter.eq('ISO3', 'TZA')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop2 = pop18.mask(modis17.eq(13).or(pop18.gt(800)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN'), ee.Filter.eq('ISO3', 'GNQ')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop3 = pop18.mask(modis17.eq(13).or(pop18.gt(1200)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN'), ee.Filter.eq('ISO3', 'ERI')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop4 = pop18.mask(modis17.eq(13).or(pop18.gt(1500)))
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'KEN'), ee.Filter.eq('ISO3', 'MWI'), ee.Filter.eq('ISO3', 'COD'), ee.Filter.eq('ISO3', 'TGO'), ee.Filter.eq('ISO3', 'NGA'), ee.Filter.eq('ISO3', 'TCD'), ee.Filter.eq('ISO3', 'SEN'), ee.Filter.eq('ISO3', 'NER'), ee.Filter.eq('ISO3', 'COG')));
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop5 = pop18.mask(modis17.eq(13).or(pop18.gt(2500)))
+
+//unify urban areas data
+var urbpop = ee.ImageCollection([urbpop0, urbpop1, urbpop2, urbpop3, urbpop4, urbpop5]).mosaic()
+
+var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
+
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1');
+
+var lightcapita18 = (nl18.divide(pop18)).multiply(100)
+
+var lightcapita18 = lightcapita18.mask(urbpop.gt(0).and(lightcapita18.gt(0)))
+
+var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.06)))
+var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.06)).and(lightcapita18.lt(0.11)))
+var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.11)).and(lightcapita18.lt(0.16)))
+var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.16)))
+
+var replacement = ee.Image(1);
+    
+var pop18_tier_1 =pop18_tier_2.where(pop18_tier_1.gt(1), replacement);
+
+var replacement = ee.Image(2);
+
+var pop18_tier_2 =pop18_tier_2.where(pop18_tier_2.gt(1), replacement);
+
+var replacement = ee.Image(3);
+
+var pop18_tier_3 =pop18_tier_3.where(pop18_tier_3.gt(1), replacement);
+
+var replacement = ee.Image(4);
+
+var pop18_tier_4 =pop18_tier_4.where(pop18_tier_4.gt(1), replacement);
+
+var tiers_joint_urban = ee.ImageCollection([pop18_tier_1, pop18_tier_2, pop18_tier_3, pop18_tier_4]).mosaic()
+
+Map.addLayer(tiers_joint_urban)
+
+var tiers_joint = ee.ImageCollection([tiers_joint_rural, tiers_joint_urban]).mosaic()
+
+Map.addLayer(tiers_joint)
+
+Export.image.toDrive({
+  image: tiers_joint,
+  description: 'tiers',
+  folder: 'Inequality',
+  scale: 1000,
+  maxPixels: 543641321, 
   fileFormat: 'GeoTIFF',
   crs : 'EPSG:4326'
 });

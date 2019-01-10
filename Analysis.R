@@ -6,7 +6,7 @@
 ##This script must be ran after the Earth Engine (EE) javascript code. 
 #The googledrive package calls the files generated in EE. 
 
-#0) Generate NetCDF4 dataset
+#0) Generate the NetCDF4 dataset for people without access
 library(raster)
 library(ncdf4)
 library(RNetCDF)
@@ -19,10 +19,14 @@ names(data)<-c(2014:2018)
 writeRaster(data, "noaccess_SSA_2014_2018.nc", overwrite=TRUE, varname="Pop_no_access", varunit="n", 
             longname="People_without_access", xname="Longitude",   yname="Latitude", zname="Year", force_v4=TRUE, compression=7)
 
+#0.1) Generate the NetCDF4 dataset for tiers
+drive_download("tiers-0000000000-0000000000.tif", type = "tif", overwrite = TRUE)
+data = raster("tiers-0000000000-0000000000.tif")
+
+writeRaster(data, "tiersofaccess_SSA_2018.nc", overwrite=TRUE, varname="Tiers_of_access", varunit="tier", 
+            longname="Tiers_of_access", xname="Longitude",   yname="Latitude", force_v4=TRUE, compression=7)
+
 #1) Import data for populaiton and population without access
-library(googledrive)
-setwd("D:\\Dropbox (FEEM)\\Current papers\\INEQUALITY ASSESSMENT")
-    
 #drive_download("pop18.csv", type = "csv", overwrite = TRUE)
 pop18 = read.csv("pop18.csv")
     
@@ -393,7 +397,7 @@ ggsave("comparisontanzaniazoom.png", device = "png", width = 30, height = 20, un
 #7) inequality in ACCESS: calculate indexes and produce Lorenz Curve graphs
 library(ineq)
 library(sf)
-shapefile = st_read("C:\\Users\\GIACOMO\\Downloads\\gadm36_1.shp")
+shapefile = st_read("shapefile/gadm36_1.shp")
 shapefile = merge(shapefile, elrates, by=c("GID_1"), all=TRUE)
 data = shapefile
 
@@ -507,9 +511,6 @@ ggsave("mapginiaccess.png", plot = mapginiaccess, device = "png", width = 15, he
 
 #######
 ## Define and validate rural/urban distinction
-library(googledrive)
-setwd("D:\\Dropbox (FEEM)\\Current papers\\INEQUALITY ASSESSMENT")
-
 #drive_download("popu0.csv", type = "csv", overwrite = TRUE)
 popu0 = read.csv("popu0.csv")
 
@@ -936,9 +937,6 @@ ggsave("mapginicons.png", plot = mapginicons, device = "png", width = 15, height
 #############################
 # Country-level sensitivity analysis
 #1) Import data for populaiton and population without access
-library(googledrive)
-setwd("D:\\Dropbox (FEEM)\\Current papers\\INEQUALITY ASSESSMENT")
-
 #drive_download("pop17.csv", type = "csv", overwrite = TRUE)
 pop17 = read.csv("pop17.csv")
 
@@ -1131,6 +1129,7 @@ pops=subset(pops, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.
 pops=subset(pops, changedensity>0)
 
 library(sf)
+
 shapefile = st_read("C:\\Users\\GIACOMO\\Downloads\\gadm36_1.shp")
 shapefile = merge(shapefile, pops, by=c("GID_1"), all=TRUE)
 
@@ -1167,7 +1166,7 @@ meanpercapitanonzero = dplyr::filter(meanpercapitanonzero,  !is.na(GID_0))
 
 merger = merge(meanpercapitanonzero, elrates, by="GID_1")
 merger$elrate18 = round(merger$elrate18, digits = 2)
-merger = subset(merger, merger$elrate18 > 0.75)
+merger = subset(merger, merger$elrate18 > 0.5)
 
 shape = merge(shapefile, merger, by=c("GID_1"))
 
@@ -1247,6 +1246,3 @@ changerural = ggplot(data=pops.rural2, aes(x=reorder(NAME_1.x, -median), y = med
 library(cowplot)
 ggsave("plot.png", plot_grid(changeurban, changerural, labels=c("Urban", "Rural"), label_size = 10, hjust= 0, nrow =2)
        , device = "png", width = 22, height = 25, units = "cm", scale=0.8)
-
-
-
