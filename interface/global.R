@@ -1,7 +1,7 @@
 library(shiny)
 library(leaflet)
 library(dplyr)
-library(sf)
+library(rgdal)
 library(htmltools)
 
 pop18 = read.csv("data/pop18.csv")
@@ -36,9 +36,8 @@ setnames(elrates,names(elrates),varnames )
 elrates$eldiff = elrates$elrate18 - elrates$elrate14 
 elrates$eldiffpc = (elrates$elrate18 - elrates$elrate14) / elrates$elrate14
 
-shapefile = st_read("data/gadm36_1.shp")
+shapefile = readOGR("data/gadm36_2.shp")
 shapefile = merge(shapefile, elrates, by=c("GID_1"), all=TRUE)
-shapefile = st_simplify(shapefile, dTolerance = 0.05)
 
 bins <- c(0, 0.25, 0.5, 0.75, 1)
 pal <- colorBin("Spectral", domain = shapefile$elrate18, bins = bins)

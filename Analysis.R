@@ -1,16 +1,41 @@
 ##R Script for: 
-##A High-Resolution, Updatable, Fully-Reproducible Gridded Dataset to Assess Recent Progress towardsElectrification in Sub-Saharan Africa
-##Giacomo Falchetta
-## Version: 09/01/18
+##A High-Resolution Gridded Dataset to Assess Electrification in Sub-Saharan Africa
+##Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
+## Version: 28/01/18
 
-##This script must be ran after the Earth Engine (EE) javascript code. 
-#The googledrive package calls the files generated in EE. 
+##NB This script must be ran after the Earth Engine (EE) javascript code. 
+#The googledrive package will call and download the files generated in EE. 
+#The script produces figures and statistics, and can be easily manipupalted to produce new metrics.
+#Supporting files and folder structure as in the GitHub repository are required for the script to run successfully.
+#Any question should be addressed to giacomo.falchetta@feem.it
 
-#0) Generate the NetCDF4 dataset for people without access
+#Load required libraries (or install them, previosuly)
 library(raster)
 library(ncdf4)
 library(RNetCDF)
+library(googledrive)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(ggpmisc)
+library(wbstats)
+library(ggrepel)
+library(ineq)
+library(sf)
+library(cowplot)
+library(rworldmap)
+library(rgdal)
+library(reshape2)
+library(latex2exp)
+library(tidyr)
+library(sf)
+library(rgdal)
+library(ggthemes)
+library(RColorBrewer)
+library(gtools)
 
+#0) Generate the NetCDF4 dataset for people without access
 drive_download("pop_noaccess-0000000000-0000014848.tif", type = "tif", overwrite = TRUE)
 data = stack("pop_noaccess-0000000000-0000014848.tif")
 
@@ -27,22 +52,23 @@ writeRaster(data, "tiersofaccess_SSA_2018.nc", overwrite=TRUE, varname="Tiers_of
             longname="Tiers_of_access", xname="Longitude",   yname="Latitude", force_v4=TRUE, compression=7)
 
 #1) Import data for populaiton and population without access
-#drive_download("pop18.csv", type = "csv", overwrite = TRUE)
+
+drive_download("pop18.csv", type = "csv", overwrite = TRUE)
 pop18 = read.csv("pop18.csv")
     
-#drive_download("pop16.csv", type = "csv", overwrite = TRUE)
+drive_download("pop16.csv", type = "csv", overwrite = TRUE)
 pop16 = read.csv("pop16.csv")
 
-#drive_download("pop14.csv", type = "csv", overwrite = TRUE)
+drive_download("pop14.csv", type = "csv", overwrite = TRUE)
 pop14 = read.csv("pop14.csv")
     
-#drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
 no_acc_18 = read.csv("no_acc_18.csv")
 
-#drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
 no_acc_16 = read.csv("no_acc_16.csv")
     
-#drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
 no_acc_14 = read.csv("no_acc_14.csv")
     
 #1.1) Merge different years, remove non Sub-Saharan countries and other misc provinces
@@ -66,7 +92,7 @@ merged_14$elrate=(1-(merged_14$sum.y / merged_14$sum.x))
 elrates = data.frame(merged_18$elrate, merged_16$elrate, merged_14$elrate, merged_14$GID_1, merged_14$GID_0.x)
     
 varnames<-c("elrate18", "elrate16", "elrate14", "GID_1", "GID_0")
-library(data.table)
+
 setnames(elrates,names(elrates),varnames )
     
 #2.1) Calculate the change in electrification rates over the two years considered
@@ -74,7 +100,7 @@ elrates$eldiff = elrates$elrate18 - elrates$elrate14
 elrates$eldiffpc = (elrates$elrate18 - elrates$elrate14) / elrates$elrate14
     
 #3) Calculate national electrification rates
-library(dplyr)
+
 merged_14_countrylevel = merged_14 %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
 merged_14_countrylevel$elrate = (1-(merged_14_countrylevel$popnoacc/merged_14_countrylevel$pop))
     
@@ -90,8 +116,7 @@ varnames<-c("GID_0", "elrate_diff", "elrate18", "elrate16","elrate14")
 setnames(merged_diff,names(merged_diff),varnames )
     
 #3.1) Plot change in national electricity access rates between the two years considered
-library(ggplot2)
-library(scales)
+
 barplot = ggplot(merged_diff, aes(x=reorder(GID_0, -elrate_diff), y=elrate_diff))+
       theme_classic()+
       scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
@@ -104,22 +129,22 @@ barplot = ggplot(merged_diff, aes(x=reorder(GID_0, -elrate_diff), y=elrate_diff)
 ggsave("barplot.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
 
 #3.1) Plot change in urban and rural electricity access rates between the two years considered
-#drive_download("pop18_rur.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_rur.csv", type = "csv", overwrite = TRUE)
 pop18_rur = read.csv("pop18_rur.csv")
 
-#drive_download("pop16_rur.csv", type = "csv", overwrite = TRUE)
+drive_download("pop16_rur.csv", type = "csv", overwrite = TRUE)
 pop16_rur = read.csv("pop16_rur.csv")
 
-#drive_download("pop14_rur.csv", type = "csv", overwrite = TRUE)
+drive_download("pop14_rur.csv", type = "csv", overwrite = TRUE)
 pop14_rur = read.csv("pop14_rur.csv")
 
-#drive_download("no_acc_18_rur.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_18_rur.csv", type = "csv", overwrite = TRUE)
 no_acc_18_rur = read.csv("no_acc_18_rur.csv")
 
-#drive_download("no_acc_16_rur.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_16_rur.csv", type = "csv", overwrite = TRUE)
 no_acc_16_rur = read.csv("no_acc_16_rur.csv")
 
-#drive_download("no_acc_14_rur.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_14_rur.csv", type = "csv", overwrite = TRUE)
 no_acc_14_rur = read.csv("no_acc_14_rur.csv")
 
 #1.1) Merge different years, remove non Sub-Saharan countries and other misc provinces
@@ -143,7 +168,7 @@ merged_14_rur$elrate=(1-(merged_14_rur$sum.y / merged_14_rur$sum.x))
 elrates_rur = data.frame(merged_18_rur$elrate, merged_16_rur$elrate, merged_14_rur$elrate, merged_14_rur$GID_1, merged_14_rur$GID_0.x)
 
 varnames<-c("elrate18", "elrate16", "elrate14", "GID_1", "GID_0")
-library(data.table)
+
 setnames(elrates_rur,names(elrates_rur),varnames )
 
 #2.1) Calculate the change in electrification rates over the two years considered
@@ -151,7 +176,6 @@ elrates_rur$eldiff = elrates_rur$elrate18 - elrates_rur$elrate14
 elrates_rur$eldiffpc = (elrates_rur$elrate18 - elrates_rur$elrate14) / elrates_rur$elrate14
 
 #3) Calculate national electrification rates
-library(dplyr)
 merged_14_countrylevel_rur = merged_14_rur %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
 merged_14_countrylevel_rur$elrate = (1-(merged_14_countrylevel_rur$popnoacc/merged_14_countrylevel_rur$pop))
 
@@ -167,8 +191,6 @@ varnames<-c("GID_0", "elrate_diff", "elrate18", "elrate16","elrate14")
 setnames(merged_diff_rur,names(merged_diff_rur),varnames )
 
 #3.1) Plot change in national electricity access rates between the two years considered
-library(ggplot2)
-library(scales)
 barplot = ggplot(merged_diff_rur, aes(x=reorder(GID_0, -elrate_diff), y=elrate_diff))+
   theme_classic()+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
@@ -181,22 +203,22 @@ barplot = ggplot(merged_diff_rur, aes(x=reorder(GID_0, -elrate_diff), y=elrate_d
 ggsave("barplot_rural.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
 
 ##Urban
-#drive_download("pop18_urb.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_urb.csv", type = "csv", overwrite = TRUE)
 pop18_urb = read.csv("pop18_urb.csv")
 
-#drive_download("pop16_urb.csv", type = "csv", overwrite = TRUE)
+drive_download("pop16_urb.csv", type = "csv", overwrite = TRUE)
 pop16_urb = read.csv("pop16_urb.csv")
 
-#drive_download("pop14_urb.csv", type = "csv", overwrite = TRUE)
+drive_download("pop14_urb.csv", type = "csv", overwrite = TRUE)
 pop14_urb = read.csv("pop14_urb.csv")
 
-#drive_download("no_acc_18_urb.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_18_urb.csv", type = "csv", overwrite = TRUE)
 no_acc_18_urb = read.csv("no_acc_18_urb.csv")
 
-#drive_download("no_acc_16_urb.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_16_urb.csv", type = "csv", overwrite = TRUE)
 no_acc_16_urb = read.csv("no_acc_16_urb.csv")
 
-#drive_download("no_acc_14_urb.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_14_urb.csv", type = "csv", overwrite = TRUE)
 no_acc_14_urb = read.csv("no_acc_14_urb.csv")
 
 #1.1) Merge different years, remove non Sub-Saharan countries and other misc provinces
@@ -220,7 +242,6 @@ merged_14_urb$elrate=(1-(merged_14_urb$sum.y / merged_14_urb$sum.x))
 elrates_urb = data.frame(merged_18_urb$elrate, merged_16_urb$elrate, merged_14_urb$elrate, merged_14_urb$GID_1, merged_14_urb$GID_0.x)
 
 varnames<-c("elrate18", "elrate16", "elrate14", "GID_1", "GID_0")
-library(data.table)
 setnames(elrates_urb,names(elrates_urb),varnames )
 
 #2.1) Calculate the change in electrification rates over the two years considered
@@ -228,7 +249,6 @@ elrates_urb$eldiff = elrates_urb$elrate18 - elrates_urb$elrate14
 elrates_urb$eldiffpc = (elrates_urb$elrate18 - elrates_urb$elrate14) / elrates_urb$elrate14
 
 #3) Calculate national electrification rates
-library(dplyr)
 merged_14_countrylevel_urb = merged_14_urb %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
 merged_14_countrylevel_urb$elrate = (1-(merged_14_countrylevel_urb$popnoacc/merged_14_countrylevel_urb$pop))
 
@@ -261,31 +281,44 @@ merged_noaccess$difference = merged_noaccess$merged_18_countrylevel.popnoacc-mer
 
 #########
 #5) Download World Bank / ESMAP electrification data to validate the approach
-library(wbstats)
+formula <- y ~ x
+
 elrate_wb <- wb(indicator = "EG.ELC.ACCS.ZS", startdate = 2016, enddate = 2016)
 elrate_wb = data.frame(elrate_wb$iso3c, elrate_wb$value)
-merged_16_countrylevel = merge(merged_16_countrylevel, elrate_wb, by.x = "GID_0.x", by.y = "elrate_wb.iso3c")
+merged_18_countrylevel = merge(merged_18_countrylevel, elrate_wb, by.x = "GID_0.x", by.y = "elrate_wb.iso3c")
+
+gdppc <- wb(indicator = "NY.GDP.PCAP.PP.KD", startdate = 2016, enddate = 2016)
+gdppc = data.frame(gdppc$iso3c, gdppc$value)
+merged_18_countrylevel = merge(merged_18_countrylevel, gdppc, by.x = "GID_0.x", by.y = "gdppc.iso3c")
 
 #5.1) Calculate the discrepancy between estimate and WB data
-merged_16_countrylevel$discrepancy = merged_16_countrylevel$elrate - merged_16_countrylevel$elrate_wb.value/100
+merged_18_countrylevel$discrepancy = merged_18_countrylevel$elrate - merged_18_countrylevel$elrate_wb.value/100
 
 #5.2) Validation plot
-library(ggrepel)
-comparisonwb = ggplot(merged_16_countrylevel, aes(x=elrate, y=elrate_wb.value/100))+
-  geom_point(data=merged_16_countrylevel, aes(x=elrate, y=elrate_wb.value/100, size=pop/1e06), alpha=0.7)+
-  geom_label_repel(data=merged_16_countrylevel, aes(x=elrate, y=elrate_wb.value/100, label = GID_0.x),
+
+my_breaks = c(1000, 2500, 7500)
+
+comparisonwb = ggplot(merged_18_countrylevel, aes(x=elrate, y=elrate_wb.value/100))+
+  geom_point(data=merged_18_countrylevel, aes(x=elrate, y=elrate_wb.value/100, size=pop/1e06, colour=gdppc.value), alpha=0.7)+
+  geom_label_repel(data=merged_18_countrylevel, aes(x=elrate, y=elrate_wb.value/100, label = GID_0.x),
                    box.padding   = 0.2, 
                    point.padding = 0.3,
                    segment.color = 'grey50') +
-  scale_size_continuous(range = c(3, 9), name = "Total pop. (million)")+
+  scale_size_continuous(range = c(3, 14), name = "Total pop. (million)")+
+  scale_colour_continuous(name = "PPP per-capita GDP", type = "viridis", trans = "log", breaks = my_breaks, labels = my_breaks)+
   theme_classic()+
   geom_abline()+
-  ylab("Electrficiation rate (IEA World Bank 2016)")+
-  xlab("Electrification rate (NTL estimate 2016)")+
+  ylab("Electrficiation rate (ESMAP/World Bank)")+
+  xlab("Electrification rate (Estimated)")+
   scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
+  theme(axis.title=element_text(size=12), axis.title.y = element_text(size = 14), axis.title.x = element_text(size = 14), legend.text=element_text(size=14))+
+  stat_poly_eq(aes(label = paste(..rr.label..)), 
+               label.x.npc = "right", label.y.npc = 0.15,
+               formula = formula, parse = TRUE, size = 8)
 
-ggsave("comparisonwb.png", plot = comparisonwb, device = "png", width = 24, height = 12, units = "cm", scale=1.3)
+
+ggsave("comparisonwb.png", comparisonwb, device = "png", width = 20, height = 12, units = "cm", scale=1.2)
 
 #5.3) Validate urban and rural electrification rates with plots
 #Urban
@@ -338,20 +371,20 @@ province = read.csv("D:\\Dropbox (FEEM)\\Current papers\\INEQUALITY ASSESSMENT\\
 #Burundi, Ethiopia, Ghana, Sierra Leone 2016
 # Senegal, Togo, Tanzania 2017
 
-#drive_download("pop18.csv", type = "csv", overwrite = TRUE)
-pop18 = read.csv("pop18.csv")
+drive_download("pop18.csv", type = "csv", overwrite = TRUE)
+pop18 = read.csv("pop18_valid.csv")
 
-#drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
-no_acc_14 = read.csv("no_acc_14.csv")
+drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
+no_acc_14 = read.csv("no_acc_14_valid.csv")
 
-#drive_download("no_acc_15.csv", type = "csv", overwrite = TRUE)
-no_acc_15 = read.csv("no_acc_15.csv")
+drive_download("no_acc_15.csv", type = "csv", overwrite = TRUE)
+no_acc_15 = read.csv("no_acc_15_valid.csv")
 
-#drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
-no_acc_16 = read.csv("no_acc_16.csv")
+drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
+no_acc_16 = read.csv("no_acc_16_valid.csv")
 
-#drive_download("no_acc_17.csv", type = "csv", overwrite = TRUE)
-no_acc_17 = read.csv("no_acc_17.csv")
+drive_download("no_acc_17.csv", type = "csv", overwrite = TRUE)
+no_acc_17 = read.csv("no_acc_17_valid.csv")
 
 #Merge with corresponding year, clean
 merged_14 = merge(no_acc_14, pop18, by=c("GID_1"))
@@ -379,24 +412,46 @@ merged_17$elrate=(1-(merged_17$sum.x / merged_17$sum.y))
 prova = rbind(merged_14, merged_15, merged_16, merged_17)
 prova = merge(province, prova, by="GID_1")
 
+formula <- y ~ x
+
 #6.2) Province-level validation plot
-ggplot()+
-  geom_point(data=prova, aes(x=elrate, y=as.numeric((elaccess/100)), color=GID_0.x, size=sum.y/1e06), alpha=0.7)+
+ggplot(data=prova, aes(x=elrate, y=elaccess/100))+
+  geom_point(aes(x=elrate, y=elaccess/100, color=GID_0.x, size=sum.y/1e06), alpha=0.7)+
   theme_classic()+
   geom_abline()+
-  scale_x_continuous(limits=c(0,1))+
-  scale_y_continuous(limits=c(0,1))+
-  scale_size_continuous(range = c(3, 9), name = "Total pop. (million)")+
-  ylab("Province-level electrification rate - Surveys data")+
-  xlab("Province-level electrification rate - (VIIRS DNB light)")+
+  scale_size_continuous(range = c(3, 14), name = "Total pop. (million)")+
   scale_colour_discrete(name = "Country")+
-  theme(axis.title=element_text(size=8))
+  ylab("Province-level electrification rate - DHS surveys data")+
+  xlab("Province-level electrification rate - NTL estimate)")+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
+  theme(axis.title=element_text(size=12), axis.title.y = element_text(size = 16), axis.title.x = element_text(size = 16), legend.text=element_text(size=14))+
+  stat_poly_eq(aes(label = paste(..rr.label..)), 
+               label.x.npc = "right", label.y.npc = 0.15,
+               formula = formula, parse = TRUE, size = 8)
 
-ggsave("comparisontanzaniazoom.png", device = "png", width = 30, height = 20, units = "cm", scale=0.75)
+
+ggsave("comparisontanzaniazoom.png", device = "png", width = 30, height = 20, units = "cm", scale=0.9)
+
+formula = "elaccess/100  ~ elrate"
+model = lm(formula, data = prova)
+prova$resid <- residuals(model)
+
+formula <- y ~ x
+
+ggplot(data=prova, aes(x=elaccess/100, y=resid))+
+  geom_point(aes(y=resid, x=elaccess/100, color=GID_0.x, size=sum.y/1e06), alpha=0.7)+
+  theme_classic()+
+geom_smooth(method = "lm")+
+  scale_size_continuous(range = c(3, 14), name = "Total pop. (million)")+
+  scale_colour_discrete(name = "Country")+
+  ylab("Estimation discrepancy")+
+  xlab("Province-level electrification rate - DHS surveys data")+
+  theme(axis.title=element_text(size=12), axis.title.y = element_text(size = 16), axis.title.x = element_text(size = 16), legend.text=element_text(size=14))
+
+ggsave("discrepancy.png", device = "png", width = 30, height = 20, units = "cm", scale=0.9)
 
 #7) inequality in ACCESS: calculate indexes and produce Lorenz Curve graphs
-library(ineq)
-library(sf)
 shapefile = st_read("shapefile/gadm36_1.shp")
 shapefile = merge(shapefile, elrates, by=c("GID_1"), all=TRUE)
 data = shapefile
@@ -450,12 +505,14 @@ data = as.data.frame(shapefile)
 
 }
 
-library(cowplot)
-ggsave("Lorenz.png", plot_grid(lorenz[['BDI']], lorenz[['KEN']], lorenz[['ETH']], lorenz[['TZA']], lorenz[['NGA']], lorenz[['COD']], labels=c("BDI", "KEN", "ETH", "TZA", "NGA", "COD"), label_size = 6, hjust= 0, ncol=2)
-, device = "png", width = 35, height = 30, units = "cm", scale=0.5)
+
+
+pgrid = plot_grid(lorenz[['BDI']] + theme(legend.position="none"), lorenz[['KEN']] + theme(legend.position="none"), lorenz[['ETH']] + theme(legend.position="none"), lorenz[['TZA']] + theme(legend.position="none"), lorenz[['NGA']]  + theme(legend.position="none"), lorenz[['COD']] + theme(legend.position="none"), lorenz[['GHA']] + theme(legend.position="none"), lorenz[['ZAF']] + theme(legend.position="none"), lorenz[['AGO']] + theme(legend.position="none"),  labels=c("BDI", "KEN", "ETH", "TZA", "NGA", "COD", "GHA", "ZAF", "AGO"), label_size = 6, hjust= 0, ncol=3)
+legend <- get_legend(lorenz[['BDI']])
+p <- plot_grid(pgrid, legend, ncol = 2, rel_widths = c(0.4, .1))
+ggsave("Lorenz.png", p, device = "png", width = 40, height = 30, units = "cm", scale=0.5)
 
 ginis14 = as.data.frame(ine14)
-library(reshape2)
 ginis14 = melt(ginis14)
 ginis18 = as.data.frame(ine18)
 ginis18 = melt(ginis18)
@@ -463,8 +520,7 @@ ginis = data.frame(ginis14$variable, ginis14$value, ginis18$value, (ginis18$valu
 varnames<-c("ISO3", "Gini14", "Gini18", "DiffGini")
 setnames(ginis,names(ginis),varnames )
 
-library(rworldmap)
-library(rgdal)
+
 ginis_access <- joinCountryData2Map(ginis, joinCode = "ISO3",
                                        nameJoinColumn = "ISO3")
 
@@ -511,42 +567,42 @@ ggsave("mapginiaccess.png", plot = mapginiaccess, device = "png", width = 15, he
 
 #######
 ## Define and validate rural/urban distinction
-#drive_download("popu0.csv", type = "csv", overwrite = TRUE)
+drive_download("popu0.csv", type = "csv", overwrite = TRUE)
 popu0 = read.csv("popu0.csv")
 
-#drive_download("popu1.csv", type = "csv", overwrite = TRUE)
+drive_download("popu1.csv", type = "csv", overwrite = TRUE)
 popu1 = read.csv("popu1.csv")
 
-#drive_download("popu2.csv", type = "csv", overwrite = TRUE)
+drive_download("popu2.csv", type = "csv", overwrite = TRUE)
 popu2 = read.csv("popu2.csv")
 
-#drive_download("popu3.csv", type = "csv", overwrite = TRUE)
+drive_download("popu3.csv", type = "csv", overwrite = TRUE)
 popu3 = read.csv("popu3.csv")
 
-#drive_download("popu4.csv", type = "csv", overwrite = TRUE)
+drive_download("popu4.csv", type = "csv", overwrite = TRUE)
 popu4 = read.csv("popu4.csv")
 
-#drive_download("popu5.csv", type = "csv", overwrite = TRUE)
+drive_download("popu5.csv", type = "csv", overwrite = TRUE)
 popu5 = read.csv("popu5.csv")
 
 #
 
-#drive_download("popt0.csv", type = "csv", overwrite = TRUE)
+drive_download("popt0.csv", type = "csv", overwrite = TRUE)
 popt0 = read.csv("popt0.csv")
 
-#drive_download("popt1.csv", type = "csv", overwrite = TRUE)
+drive_download("popt1.csv", type = "csv", overwrite = TRUE)
 popt1 = read.csv("popt1.csv")
 
-#drive_download("popt2.csv", type = "csv", overwrite = TRUE)
+drive_download("popt2.csv", type = "csv", overwrite = TRUE)
 popt2 = read.csv("popt2.csv")
 
-#drive_download("popt3.csv", type = "csv", overwrite = TRUE)
+drive_download("popt3.csv", type = "csv", overwrite = TRUE)
 popt3 = read.csv("popt3.csv")
 
-#drive_download("popt4.csv", type = "csv", overwrite = TRUE)
+drive_download("popt4.csv", type = "csv", overwrite = TRUE)
 popt4 = read.csv("popt4.csv")
 
-#drive_download("popt5.csv", type = "csv", overwrite = TRUE)
+drive_download("popt5.csv", type = "csv", overwrite = TRUE)
 popt5 = read.csv("popt5.csv")
 
 #
@@ -560,7 +616,6 @@ merged_14 = merge(popu, popt, by=c("ISO3"), all=TRUE)
 
 merged_14$urbrate = merged_14$sum.x / merged_14$sum.y
 
-library(wbstats)
 elrate_wb <- wb(indicator = "SP.URB.TOTL.IN.ZS", startdate = 2017, enddate = 2017)
 
 elrate_wb = data.frame(elrate_wb$iso3c, elrate_wb$value)
@@ -574,24 +629,38 @@ merged_14_countrylevel = merge(merged_14_countrylevel, merged_18_countrylevel, b
 formula = "elrate_wb.value/100 ~ urbrate"
 summary(lm(data= merged_14_countrylevel, formula=formula))
 
-library(ggrepel)
-library(ggplot2)
-ggsave("ruralvalid.png", ggplot(merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100))+
-         geom_point(data=merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100, size=pop/1e06), alpha=0.7)+
-         geom_label_repel(data=merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100, label = ISO3),
-                          box.padding   = 0.2, 
-                          point.padding = 0.3,
-                          segment.color = 'grey50') +
-         theme_classic()+
-         geom_abline()+
-         scale_size_continuous(range = c(3, 9), name = "Total pop. (million)")+
-         xlab("Estimated urban population share")+
-         scale_x_continuous(limits = c(0.1, 0.7))+
-         scale_y_continuous(limits = c(0.1, 0.7))+
-         ylab("World Bank reported urban population share"), device = "png", width = 20, height = 12, units = "cm", scale=1)
+formula = y ~ x
+
+my_breaks = c(1000, 2500, 7500)
+
+gdppc <- wb(indicator = "NY.GDP.PCAP.PP.KD", startdate = 2016, enddate = 2016)
+gdppc = data.frame(gdppc$iso3c, gdppc$value)
+merged_14_countrylevel = merge(merged_14_countrylevel, gdppc, by.x = "ISO3", by.y = "gdppc.iso3c")
+
+ruralvalid = ggplot(merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100))+
+  geom_point(data=merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100, size=pop/1e06, colour=gdppc.value), alpha=0.7)+
+  geom_label_repel(data=merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100, label = ISO3),
+                   box.padding   = 0.2, 
+                   point.padding = 0.3,
+                   segment.color = 'grey50') +
+  scale_colour_continuous(name = "PPP per-capita GDP", type = "viridis", trans = "log", breaks = my_breaks, labels = my_breaks)+
+  theme_classic()+
+  geom_abline()+
+  scale_size_continuous(range = c(3, 14), name = "Total pop. (million)")+
+  xlab("Estimated urban population share")+
+  ylab("World Bank reported urban population share")+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0.1,0.8))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0.1,0.8))+
+  theme(axis.title=element_text(size=12), axis.title.y = element_text(size = 14), axis.title.x = element_text(size = 14), legend.text=element_text(size=14))+
+  stat_poly_eq(aes(label = paste(..rr.label..)), 
+               label.x.npc = "right", label.y.npc = 0.15,
+               formula = formula, parse = TRUE, size = 8)
+
+
+ggsave("ruralvalid.png", ruralvalid, device = "png", width = 20, height = 12, units = "cm", scale=1.2)
 
 ##Define percentiles and thresholds of light per capita in urban and rural areas and plot histogram
-#drive_download("pctiles_pc_urban.csv", type = "csv", overwrite = TRUE)
+drive_download("pctiles_pc_urban.csv", type = "csv", overwrite = TRUE)
 histogram = read.csv("pctiles_pc_urban.csv")
 
 histogram = histogram %>% gather(percentile, value, -c(ISO3))
@@ -601,20 +670,19 @@ histogram = histogram[complete.cases(histogram$value), ]
 library(plyr)
 cdat <- ddply(histogram, "percentile", summarise, value.mean=median(value))
 
-
 histogram = ggplot(subset(histogram, value < 2), aes(x=value, fill=percentile)) +
   theme_classic()+
   geom_density(alpha=.4) +
   geom_vline(data=cdat, aes(xintercept=value.mean,  colour=percentile),
              linetype="dashed", size=1)+
-  xlab("Per-capita light level")+
+  xlab(TeX("Radiance ($\\mu W \\cdot cm^{-2} \\cdot sr^{-1}$)"))+
   ylab("Density")+
   scale_color_discrete(name="Median")+
   scale_fill_discrete(name="Percentile")
 
 ggsave("histogram_urban.png", plot = histogram, device = "png", width = 20, height = 12, units = "cm", scale=0.8)
 
-#drive_download("pctiles_pc_rural.csv", type = "csv", overwrite = TRUE)
+drive_download("pctiles_pc_rural.csv", type = "csv", overwrite = TRUE)
 histogram = read.csv("pctiles_pc_rural.csv")
 
 histogram = histogram %>% gather(percentile, value, -c(ISO3))
@@ -624,12 +692,12 @@ histogram = histogram[complete.cases(histogram$value), ]
 library(plyr)
 cdat <- ddply(histogram, "percentile", summarise, value.mean=median(value))
 
-histogram = ggplot(subset(histogram, value < 4), aes(x=value, fill=percentile)) +
+histogram = ggplot(subset(histogram, value < 1), aes(x=value, fill=percentile)) +
   theme_classic()+
   geom_density(alpha=.4) +
   geom_vline(data=cdat, aes(xintercept=value.mean,  colour=percentile),
              linetype="dashed", size=1)+
-  xlab("Per-capita light level")+
+  xlab(TeX("Radiance ($\\mu W \\cdot cm^{-2} \\cdot sr^{-1}$)"))+
   ylab("Density")+
   scale_color_discrete(name="Median")+
   scale_fill_discrete(name="Percentile")
@@ -638,26 +706,25 @@ ggsave("histogram_rural.png", plot = histogram, device = "png", width = 20, heig
 
 ####################
 #Import rural 'consumption' tiers for 2018
-library(data.table)
-#drive_download("pop18_tier_1_rural.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_tier_1_rural.csv", type = "csv", overwrite = TRUE)
 pop18_tier_1_rural = read.csv("pop18_tier_1_rural.csv")
 pop18_tier_1_rural = data.frame(pop18_tier_1_rural$sum, pop18_tier_1_rural$GID_1)
 varnames<-c("pop_tier_1_rural", "GID_1")
 setnames(pop18_tier_1_rural,names(pop18_tier_1_rural),varnames )
 
-#drive_download("pop18_tier_2_rural.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_tier_2_rural.csv", type = "csv", overwrite = TRUE)
 pop18_tier_2_rural = read.csv("pop18_tier_2_rural.csv")
 pop18_tier_2_rural = data.frame(pop18_tier_2_rural$sum, pop18_tier_2_rural$GID_1)
 varnames<-c("pop_tier_2_rural", "GID_1")
 setnames(pop18_tier_2_rural,names(pop18_tier_2_rural),varnames )
 
-#drive_download("pop18_tier_3_rural.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_tier_3_rural.csv", type = "csv", overwrite = TRUE)
 pop18_tier_3_rural = read.csv("pop18_tier_3_rural.csv")
 pop18_tier_3_rural = data.frame(pop18_tier_3_rural$sum, pop18_tier_3_rural$GID_1)
 varnames<-c("pop_tier_3_rural", "GID_1")
 setnames(pop18_tier_3_rural,names(pop18_tier_3_rural),varnames )
 
-#drive_download("pop18_tier_4_rural.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_tier_4_rural.csv", type = "csv", overwrite = TRUE)
 pop18_tier_4_rural = read.csv("pop18_tier_4_rural.csv")
 pop18_tier_4_rural = data.frame(pop18_tier_4_rural$sum, pop18_tier_4_rural$GID_1)
 varnames<-c("pop_tier_4_rural", "GID_1")
@@ -672,7 +739,6 @@ elrates18 = dplyr::filter(elrates18,  !is.na(GID_0))
 #6) calculate gini index of consumption among those with access within each province
 colist=unique(elrates18$GID_0)
 output_d_18=list()
-
 for (A in colist){
   datin=subset(elrates18, elrates18$GID_0== A)
   
@@ -686,7 +752,6 @@ for (A in colist){
   #reshape by making rows columns and by naming such columns after GID_1 of that row
   datin = reshape(datin, direction="long", idvar=c("datin.GID_1", "datin.GID_0"), varying = c("datin.share_tier_1_rural", "datin.share_tier_2_rural", "datin.share_tier_3_rural", "datin.share_tier_4_rural"))
   datin2 = reshape(datin, direction="wide", idvar=c("time"), timevar = c("datin.GID_1"))
-  library(dplyr)
   datin3 = select(datin2, - matches("GID_0|time"))
   
   #calculate gini indexes
@@ -733,10 +798,8 @@ data_cons = data.frame(elrates18$GID_0, elrates18$GID_1, elrates18$pop_tier_1_ru
 varnames<-c("GID_0", "GID_1", "t1_18", "t2_18", "t3_18", "t4_18")
 setnames(data_cons,names(data_cons),varnames )
 
-library(tidyr)
 dfm <- gather(data_cons, key=tier, value=value, 't1_18','t2_18','t3_18', 't4_18')
 
-library(dplyr)
 dfm_sum = dfm %>% 
   dplyr::group_by(GID_0, tier) %>% 
   dplyr::summarise(value = sum(value))
@@ -757,7 +820,6 @@ gini_cons_flat = melt(gini_cons_flat)
 varnames<-c("ISO3", "Gini_cons")
 setnames(gini_cons_flat,names(gini_cons_flat),varnames )
 
-library(scales)
 barplot_consumption = ggplot() + 
   theme_classic()+
   geom_bar(data = dfm_sum ,aes(x = GID_0, y = value, fill = tier), position = "fill",stat = "identity") +
@@ -772,26 +834,25 @@ ggsave("barplot_consumption_rur.png", plot = barplot_consumption, device = "png"
 
 ####################
 #Import urban consumption' tiers for 2018
-library(data.table)
-#drive_download("pop18_tier_1_urban.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_tier_1_urban.csv", type = "csv", overwrite = TRUE)
 pop18_tier_1_urban = read.csv("pop18_tier_1_urban.csv")
 pop18_tier_1_urban = data.frame(pop18_tier_1_urban$sum, pop18_tier_1_urban$GID_1)
 varnames<-c("pop_tier_1_urban", "GID_1")
 setnames(pop18_tier_1_urban,names(pop18_tier_1_urban),varnames )
 
-#drive_download("pop18_tier_2_urban.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_tier_2_urban.csv", type = "csv", overwrite = TRUE)
 pop18_tier_2_urban = read.csv("pop18_tier_2_urban.csv")
 pop18_tier_2_urban = data.frame(pop18_tier_2_urban$sum, pop18_tier_2_urban$GID_1)
 varnames<-c("pop_tier_2_urban", "GID_1")
 setnames(pop18_tier_2_urban,names(pop18_tier_2_urban),varnames )
 
-#drive_download("pop18_tier_3_urban.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_tier_3_urban.csv", type = "csv", overwrite = TRUE)
 pop18_tier_3_urban = read.csv("pop18_tier_3_urban.csv")
 pop18_tier_3_urban = data.frame(pop18_tier_3_urban$sum, pop18_tier_3_urban$GID_1)
 varnames<-c("pop_tier_3_urban", "GID_1")
 setnames(pop18_tier_3_urban,names(pop18_tier_3_urban),varnames )
 
-#drive_download("pop18_tier_4_urban.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_tier_4_urban.csv", type = "csv", overwrite = TRUE)
 pop18_tier_4_urban = read.csv("pop18_tier_4_urban.csv")
 pop18_tier_4_urban = data.frame(pop18_tier_4_urban$sum, pop18_tier_4_urban$GID_1)
 varnames<-c("pop_tier_4_urban", "GID_1")
@@ -820,7 +881,6 @@ for (A in colist){
   #reshape by making rows columns and by naming such columns after GID_1 of that row
   datin = reshape(datin, direction="long", idvar=c("datin.GID_1", "datin.GID_0"), varying = c("datin.share_tier_1_urban", "datin.share_tier_2_urban", "datin.share_tier_3_urban", "datin.share_tier_4_urban"))
   datin2 = reshape(datin, direction="wide", idvar=c("time"), timevar = c("datin.GID_1"))
-  library(dplyr)
   datin3 = select(datin2, - matches("GID_0|time"))
   
   #calculate gini indexes
@@ -866,10 +926,8 @@ data_cons = data.frame(elrates18$GID_0, elrates18$GID_1, elrates18$pop_tier_1_ur
 varnames<-c("GID_0", "GID_1", "t1_18", "t2_18", "t3_18", "t4_18")
 setnames(data_cons,names(data_cons),varnames )
 
-library(tidyr)
 dfm <- gather(data_cons, key=tier, value=value, 't1_18','t2_18','t3_18', 't4_18')
 
-library(dplyr)
 dfm_sum = dfm %>% 
   dplyr::group_by(GID_0, tier) %>% 
   dplyr::summarise(value = sum(value))
@@ -890,7 +948,6 @@ gini_cons_flat = melt(gini_cons_flat)
 varnames<-c("ISO3", "Gini_cons")
 setnames(gini_cons_flat,names(gini_cons_flat),varnames )
 
-library(scales)
 barplot_consumption = ggplot() + 
   theme_classic()+
   geom_bar(data = dfm_sum ,aes(x = GID_0, y = value, fill = tier), position = "fill",stat = "identity") +
@@ -903,8 +960,6 @@ ggsave("barplot_consumption_urb.png", plot = barplot_consumption, device = "png"
 
 ###########
 #Map plot gini consumption
-library(rworldmap)
-
 ginis_consumption <- joinCountryData2Map(gini_cons_flat, joinCode = "ISO3",
                                     nameJoinColumn = "ISO3")
 
@@ -937,42 +992,37 @@ ggsave("mapginicons.png", plot = mapginicons, device = "png", width = 15, height
 #############################
 # Country-level sensitivity analysis
 #1) Import data for populaiton and population without access
-#drive_download("pop17.csv", type = "csv", overwrite = TRUE)
+drive_download("pop17.csv", type = "csv", overwrite = TRUE)
 pop17 = read.csv("pop17.csv")
 
 pop17 = pop17 %>% select(GID_0, GID_1, NAME_0, NAME_1, sum)
 
 varnames<-c("GID_0", "GID_1", "NAME_0", "NAME_1", "pop")
-library(data.table)
 setnames(pop17,names(pop17),varnames )
 
-#drive_download("no_acc_17_base.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_17_base.csv", type = "csv", overwrite = TRUE)
 no_acc_17_base = read.csv("no_acc_17_base.csv")
 
 no_acc_17_base = no_acc_17_base %>% select(GID_1, sum)
 
 varnames<-c("GID_1", "base")
-library(data.table)
 setnames(no_acc_17_base,names(no_acc_17_base),varnames )
 
-#drive_download("no_acc_17_minus.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_17_minus.csv", type = "csv", overwrite = TRUE)
 no_acc_17_minus = read.csv("no_acc_17_minus.csv")
 
 no_acc_17_minus = no_acc_17_minus %>% select(GID_1, sum)
 
 varnames<-c("GID_1", "minus")
-library(data.table)
 setnames(no_acc_17_minus,names(no_acc_17_minus),varnames )
 
-#drive_download("no_acc_17_plus.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_17_plus.csv", type = "csv", overwrite = TRUE)
 no_acc_17_plus = read.csv("no_acc_17_plus.csv")
 
 no_acc_17_plus = no_acc_17_plus %>% select(GID_1, sum)
 
 varnames<-c("GID_1", "plus")
-library(data.table)
 setnames(no_acc_17_plus,names(no_acc_17_plus),varnames )
-
 
 ##############
 
@@ -991,32 +1041,26 @@ merged_17$elrate_minus=(1-(merged_17$minus / merged_17$pop))
 elrates = data.frame(merged_17$base, merged_17$plus,  merged_17$minus, merged_17$pop, merged_17$GID_1, merged_17$GID_0)
 
 varnames<-c("base", "plus", "minus", "pop", "GID_1", "GID_0")
-library(data.table)
 setnames(elrates,names(elrates),varnames )
 
 
 #3) country level analysis
-library(dplyr)
 merged_17_countrylevel = merged_17 %>% group_by(GID_0) %>% dplyr::summarize(pop=sum(pop,na.rm = T), base=sum(base,na.rm = T), plus=sum(plus,na.rm = T), minus=sum(minus,na.rm = T)) %>% ungroup()
 
 merged_17_countrylevel$elrate_base = (1-(merged_17_countrylevel$base/merged_17_countrylevel$pop))
 merged_17_countrylevel$elrate_plus = (1-(merged_17_countrylevel$plus/merged_17_countrylevel$pop))
 merged_17_countrylevel$elrate_minus = (1-(merged_17_countrylevel$minus/merged_17_countrylevel$pop))
 
-library(wbstats)
 elrate_wb <- wb(indicator = "EG.ELC.ACCS.ZS", startdate = 2016, enddate = 2016)
 
 elrate_wb = data.frame(elrate_wb$iso3c, elrate_wb$value)
 
 merged_17_countrylevel = merge(merged_17_countrylevel, elrate_wb, by.x = "GID_0", by.y = "elrate_wb.iso3c")
 
-library(ggplot2)
 merged_17_countrylevel$disc_base=(merged_17_countrylevel$elrate_wb.value/100-merged_17_countrylevel$elrate_base)
 merged_17_countrylevel$disc_plus=(merged_17_countrylevel$elrate_wb.value/100-merged_17_countrylevel$elrate_plus)
 merged_17_countrylevel$disc_minus=(merged_17_countrylevel$elrate_wb.value/100-merged_17_countrylevel$elrate_minus)
 
-library(reshape2)
-library(dplyr)
 DF1 <- merged_17_countrylevel %>% select(GID_0, disc_base, disc_minus, disc_plus) %>% melt(id.var="GID_0")
 
 barplot = ggplot(DF1, aes(x=GID_0, y=value, fill=as.factor(variable)))+
@@ -1042,16 +1086,16 @@ summary(lm(data= merged_17_countrylevel, formula=formula))
 
 #######
 #WorldPop vs. LandScan-based electrification rates for baseline
-#drive_download("pop17_ls.csv", type = "csv", overwrite = TRUE)
+drive_download("pop17_ls.csv", type = "csv", overwrite = TRUE)
 pop17_ls = read.csv("pop17_ls.csv")
 
-#drive_download("pop17_wp.csv", type = "csv", overwrite = TRUE)
+drive_download("pop17_wp.csv", type = "csv", overwrite = TRUE)
 pop17_wp = read.csv("pop17_wp.csv")
 
-#drive_download("pop17_noaccess_wp.csv", type = "csv", overwrite = TRUE)
+drive_download("pop17_noaccess_wp.csv", type = "csv", overwrite = TRUE)
 pop17_noaccess_wp = read.csv("pop17_noaccess_wp.csv")
 
-#drive_download("pop17_noaccess_ls.csv", type = "csv", overwrite = TRUE)
+drive_download("pop17_noaccess_ls.csv", type = "csv", overwrite = TRUE)
 pop17_noaccess_ls = read.csv("pop17_noaccess_ls.csv")
 
 #merge (with variant of pop)
@@ -1072,18 +1116,16 @@ merged_ls$elrate=(1-(merged_ls$sum.y / merged_ls$sum.x))
 elrates = data.frame(merged_wp$elrate, merged_ls$elrate, merged_ls$GID_1, merged_ls$GID_0.x)
 
 varnames<-c("elrate_wp", "elrate_ls", "GID_1", "GID_0")
-library(data.table)
+
 setnames(elrates,names(elrates),varnames )
 
 #3) country level analysis
-library(dplyr)
 merged_wp_countrylevel = merged_wp %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
 merged_wp_countrylevel$elrate = (1-(merged_wp_countrylevel$popnoacc/merged_wp_countrylevel$pop))
 
 merged_ls_countrylevel = merged_ls %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
 merged_ls_countrylevel$elrate = (1-(merged_ls_countrylevel$popnoacc/merged_ls_countrylevel$pop))
 
-library(wbstats)
 elrate_wb <- wb(indicator = "EG.ELC.ACCS.ZS", startdate = 2016, enddate = 2016)
 
 elrate_wb = data.frame(elrate_wb$iso3c, elrate_wb$value)
@@ -1125,27 +1167,25 @@ allAreas = read.csv("allAreas.csv")
 pops = merge(changeinpopnoaccess, allAreas, by = "GID_1")
 pops$changedensity = pops$sum / no_acc_14$sum
 
-pops=subset(pops, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "DJI" & GID_0.x != "STP")
+pops=subset(pops, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "STP")
 pops=subset(pops, changedensity>0)
 
-library(sf)
-
-shapefile = st_read("C:\\Users\\GIACOMO\\Downloads\\gadm36_1.shp")
+shapefile = st_read("shapefile/gadm36_1.shp")
 shapefile = merge(shapefile, pops, by=c("GID_1"), all=TRUE)
 
 shapefile = st_simplify(shapefile, dTolerance = 0.05)
 
 ###Hotspots with low consumption: provinces where electricity access is quite high but measured intensity is low
 #1) take elrate 18
-##drive_download("pop18.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18.csv", type = "csv", overwrite = TRUE)
 pop18 = read.csv("pop18.csv")
 
-##drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
+#drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
 no_acc_18 = read.csv("no_acc_18.csv")
 
 merged_18 = merge(pop18, no_acc_18, by=c("GID_1"), all=TRUE)
 
-merged_18=subset(merged_18, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "DJI" & GID_0.x != "STP")
+merged_18=subset(merged_18, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "STP")
 
 merged_18 = dplyr::filter(merged_18,  !is.na(GID_0.x))
 
@@ -1154,14 +1194,14 @@ merged_18$elrate=(1-(merged_18$sum.y / merged_18$sum.x))
 elrates = data.frame(merged_18$elrate, merged_18$GID_1, merged_18$GID_0.x)
 
 varnames<-c("elrate18", "GID_1", "GID_0")
-library(data.table)
+
 setnames(elrates,names(elrates),varnames )
 
 #2 calculate mean, non-zero per-capita sum of light
 drive_download("meanpercapitanonzero.csv", type = "csv", overwrite = TRUE)
 meanpercapitanonzero = read.csv("meanpercapitanonzero.csv")
 
-meanpercapitanonzero=subset(meanpercapitanonzero, GID_0 != "ATF" & GID_0 != "EGY" & GID_0 != "ESH"& GID_0 != "ESP" & GID_0 != "LBY" & GID_0 != "MAR" & GID_0 != "MYT" & GID_0 != "SYC" & GID_0 != "COM" & GID_0 != "YEM" & GID_0 != "TUN" & GID_0 != "DZA" & GID_0 != "SHN" & GID_0 != "DJI" & GID_0 != "STP")
+meanpercapitanonzero=subset(meanpercapitanonzero, GID_0 != "ATF" & GID_0 != "EGY" & GID_0 != "ESH"& GID_0 != "ESP" & GID_0 != "LBY" & GID_0 != "MAR" & GID_0 != "MYT" & GID_0 != "SYC" & GID_0 != "COM" & GID_0 != "YEM" & GID_0 != "TUN" & GID_0 != "DZA" & GID_0 != "SHN" & GID_0 != "STP")
 meanpercapitanonzero = dplyr::filter(meanpercapitanonzero,  !is.na(GID_0))
 
 merger = merge(meanpercapitanonzero, elrates, by="GID_1")
@@ -1178,9 +1218,9 @@ shape = shape[shape$mean < quantile(shape$mean, 0.5), ]
 
 shape = st_simplify(shape, dTolerance = 0.05)
 
-library(ggthemes)
-library(RColorBrewer)
-library(scales)
+st_write(shape, "shape.shp", driver="ESRI Shapefile")
+st_write(shapefile, "shape2.shp", driver="ESRI Shapefile")
+
 map1 = ggplot() +
   ggthemes::theme_map()+
   geom_sf(data = shapefile, aes(fill = changedensity))+
@@ -1194,7 +1234,7 @@ map2 = ggplot() +
   scale_fill_continuous(low="#003366", high="#3399ff", name="Mean light per capita")+
   theme(plot.margin=grid::unit(c(0,0,0,0), "mm"), panel.grid.major = element_line(colour = 'transparent'))
 
-library(cowplot)
+
 ggsave("maps.png", plot_grid(map1, map2, label_size = 10, hjust= 0, ncol=2)
        , device = "png", width = 30, height = 30, units = "cm", scale=0.8)
 
@@ -1243,6 +1283,575 @@ changerural = ggplot(data=pops.rural2, aes(x=reorder(NAME_1.x, -median), y = med
   xlab("Province and country")+
   ylab("Median change in per-capita light intensity (2014-2018)")
 
-library(cowplot)
+
 ggsave("plot.png", plot_grid(changeurban, changerural, labels=c("Urban", "Rural"), label_size = 10, hjust= 0, nrow =2)
        , device = "png", width = 22, height = 25, units = "cm", scale=0.8)
+
+##
+
+geovars = read.csv('validation/HouseholdGeovariablesIHS4.csv')
+
+cons = read.csv('validation/hh_mod_f.csv')
+
+cons2 = read.csv('validation/IHS4 Consumption Aggregate.csv')
+
+#
+
+#average unit price of electriicty in 2017
+# 47 MK per unit
+#https://www.meramalawi.mw/
+
+
+#
+
+merger = merge(cons, geovars, by="case_id")
+merger = merge(merger, cons2, by="case_id")
+
+merger = merger %>% dplyr::select(case_id, lat_modified, lon_modified, hh_f25, hh_f26b, urban)
+
+merger$adjexpenditure = merger$hh_f25
+
+merger_urban_mwi = subset(merger, merger$urban==1 & hh_f26b ==5)
+merger_rural_mwi = subset(merger, merger$urban==2 & hh_f26b ==5)
+
+merger_rural_mwi=subset(merger_rural_mwi, merger_rural_mwi$adjexpenditure > 0)
+merger_urban_mwi=subset(merger_urban_mwi, merger_urban_mwi$adjexpenditure > 0)
+
+merger_urban_mwi$adjexpenditure = (merger_urban_mwi$adjexpenditure/31)/24
+merger_rural_mwi$adjexpenditure = (merger_rural_mwi$adjexpenditure/31)/35
+vettore = c(0.012, 0.2, 1, 3.4, Inf)
+
+merger_urban_mwi$tier <- as.numeric(cut(merger_urban_mwi$adjexpenditure, breaks = vettore, 
+                                        labels = c(1:4), right = FALSE))
+
+
+merger_rural_mwi$tier <- as.numeric(cut(merger_rural_mwi$adjexpenditure, breaks = vettore, 
+                                        labels = c(1:4), right = FALSE))
+
+merger_urban_mwi$tier = merger_urban_mwi$tier 
+merger_rural_mwi$tier = merger_rural_mwi$tier 
+
+merger_urban_mwi=subset(merger_urban_mwi, merger_urban_mwi$tier > 0)
+merger_rural_mwi=subset(merger_rural_mwi, merger_rural_mwi$tier > 0)
+
+
+#average unit price of electriicty in 2016
+#https://infoguidenigeria.com/electricity-tariff-structure/
+
+merger = read.csv('validation/sect11_plantingw3.csv')
+
+merger = merger %>% dplyr::select(hhid, s11q25a, s11q25b, sector)
+merger$urban = merger$sector
+
+merger_urban_nga = subset(merger, merger$urban==1 & s11q25b ==3)
+merger_rural_nga = subset(merger, merger$urban==2 & s11q25b ==3)
+
+merger_rural_nga=subset(merger_rural_nga, merger_rural_nga$s11q25a > 0)
+merger_urban_nga=subset(merger_urban_nga, merger_urban_nga$s11q25a > 0)
+
+merger_urban_nga$s11q25a = merger_urban_nga$s11q25a/31/8
+merger_rural_nga$s11q25a = merger_rural_nga$s11q25a/31/14
+vettore = c(0.012, 0.2, 1, 3.4, Inf)
+
+merger_urban_nga$tier <- as.numeric(cut(merger_urban_nga$s11q25a, breaks = vettore, 
+                                        labels = c(1:4), right = FALSE))
+
+merger_rural_nga$tier <- as.numeric(cut(merger_rural_nga$s11q25a, breaks = vettore, 
+                                        labels = c(1:4), right = FALSE))
+
+
+merger_urban_nga$tier = merger_urban_nga$tier 
+merger_rural_nga$tier = merger_rural_nga$tier 
+
+merger_urban_nga=subset(merger_urban_nga, merger_urban_nga$tier > 0)
+merger_rural_nga=subset(merger_rural_nga, merger_rural_nga$tier > 0)
+
+#
+geovars = read.csv('validation/GSEC10_1.csv')
+
+cons = read.csv('validation/unps 2013-14 consumption aggregate.csv')
+
+merger = merge(cons, geovars, by="HHID")
+
+merger = merger %>% dplyr::select(HHID, h10q4, h10q5a, urban)
+
+merger_urban_uga = subset(merger, merger$urban==1)
+merger_rural_uga = subset(merger, merger$urban==0)
+
+merger_rural_uga=subset(merger_rural_uga, merger_rural_uga$h10q4 > 0)
+merger_urban_uga=subset(merger_urban_uga, merger_urban_uga$h10q4 > 0)
+
+merger_urban_uga$h10q4 = merger_urban_uga$h10q4/31
+merger_rural_uga$h10q4 = merger_rural_uga$h10q4/31
+vettore = c(0.012, 0.2, 1, 3.4, Inf)
+
+
+merger_urban_uga$tier <- as.numeric(cut(merger_urban_uga$h10q4, breaks = vettore, 
+                                        labels = c(1:4), right = FALSE))
+
+merger_rural_uga$tier <- as.numeric(cut(merger_rural_uga$h10q4, breaks = vettore, 
+                                        labels = c(1:4), right = FALSE))
+
+merger_urban_uga$tier = merger_urban_uga$tier 
+merger_rural_uga$tier = merger_rural_uga$tier 
+
+merger_urban_uga=subset(merger_urban_uga, merger_urban_uga$tier > 0)
+merger_rural_uga=subset(merger_rural_uga, merger_rural_uga$tier > 0)
+
+
+#
+#1) Import data for populaiton and population without access
+drive_download("pop18.csv", type = "csv", overwrite = TRUE)
+pop18 = read.csv("pop18.csv")
+
+drive_download("pop16.csv", type = "csv", overwrite = TRUE)
+pop16 = read.csv("pop16.csv")
+
+drive_download("pop14.csv", type = "csv", overwrite = TRUE)
+pop14 = read.csv("pop14.csv")
+
+drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
+no_acc_18 = read.csv("no_acc_18.csv")
+
+drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
+no_acc_16 = read.csv("no_acc_16.csv")
+
+drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
+no_acc_14 = read.csv("no_acc_14.csv")
+
+#1.1) Merge different years, remove non Sub-Saharan countries and other misc provinces
+merged_14 = merge(pop14, no_acc_14, by=c("GID_1"), all=TRUE)
+merged_16 = merge(pop16, no_acc_16, by=c("GID_1"), all=TRUE)
+merged_18 = merge(pop18, no_acc_18, by=c("GID_1"), all=TRUE)
+
+merged_14=subset(merged_14, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "DJI" & GID_0.x != "STP")
+merged_16=subset(merged_16, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "DJI" & GID_0.x != "STP")
+merged_18=subset(merged_18, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "DJI" & GID_0.x != "STP")
+
+merged_14 = dplyr::filter(merged_14,  !is.na(GID_0.x))
+merged_16 = dplyr::filter(merged_16,  !is.na(GID_0.x))
+merged_18 = dplyr::filter(merged_18,  !is.na(GID_0.x))
+
+#2) Calculate province-level electrification rates and merge them into a single dataframe 
+merged_18$elrate=(1-(merged_18$sum.y / merged_18$sum.x))
+merged_16$elrate=(1-(merged_16$sum.y / merged_16$sum.x))
+merged_14$elrate=(1-(merged_14$sum.y / merged_14$sum.x))
+
+elrates = data.frame(merged_18$elrate, merged_16$elrate, merged_14$elrate, merged_14$GID_1, merged_14$GID_0.x)
+
+varnames<-c("elrate18", "elrate16", "elrate14", "GID_1", "GID_0")
+
+setnames(elrates,names(elrates),varnames )
+
+#2.1) Calculate the change in electrification rates over the two years considered
+elrates$eldiff = elrates$elrate18 - elrates$elrate14 
+elrates$eldiffpc = (elrates$elrate18 - elrates$elrate14) / elrates$elrate14
+
+#3) Calculate national electrification rates
+merged_14_countrylevel = merged_14 %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
+merged_14_countrylevel$elrate = (1-(merged_14_countrylevel$popnoacc/merged_14_countrylevel$pop))
+
+merged_16_countrylevel = merged_16 %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
+merged_16_countrylevel$elrate = (1-(merged_16_countrylevel$popnoacc/merged_16_countrylevel$pop))
+
+merged_18_countrylevel = merged_18 %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
+merged_18_countrylevel$elrate = (1-(merged_18_countrylevel$popnoacc/merged_18_countrylevel$pop))
+
+merged_diff=data.frame(merged_18_countrylevel$GID_0.x, (merged_18_countrylevel$elrate-merged_14_countrylevel$elrate), merged_18_countrylevel$elrate, merged_16_countrylevel$elrate, merged_14_countrylevel$elrate)
+merged_diff <- na.omit(merged_diff)
+varnames<-c("GID_0", "elrate_diff", "elrate18", "elrate16","elrate14")
+setnames(merged_diff,names(merged_diff),varnames )
+
+merger_rural_mwi$GID_0 = "MWI"
+merger_rural_nga$GID_0 = "NGA"
+merger_rural_uga$GID_0 = "UGA"
+
+merger_rural_mwi = merger_rural_mwi %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_rural_mwi$value = merger_rural_mwi$value/sum(merger_rural_mwi$value)
+
+merger_rural_nga = merger_rural_nga %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_rural_nga$value = merger_rural_nga$value/sum(merger_rural_nga$value)
+
+
+merger_rural_uga = merger_rural_uga %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_rural_uga$value = merger_rural_uga$value/sum(merger_rural_uga$value)
+
+all_real_rural = rbind(merger_rural_mwi, merger_rural_nga, merger_rural_uga)
+all_real_rural$type = "Surveyed"
+all_real_rural$tier = as.factor(all_real_rural$tier)
+
+drive_download("pop18_tier_1_rural.csv", type = "csv", overwrite = TRUE)
+pop18_tier_1_rural = read.csv("pop18_tier_1_rural.csv")
+pop18_tier_1_rural = data.frame(pop18_tier_1_rural$sum, pop18_tier_1_rural$GID_1)
+varnames<-c("pop_tier_1_rural", "GID_1")
+setnames(pop18_tier_1_rural,names(pop18_tier_1_rural),varnames )
+
+drive_download("pop18_tier_2_rural.csv", type = "csv", overwrite = TRUE)
+pop18_tier_2_rural = read.csv("pop18_tier_2_rural.csv")
+pop18_tier_2_rural = data.frame(pop18_tier_2_rural$sum, pop18_tier_2_rural$GID_1)
+varnames<-c("pop_tier_2_rural", "GID_1")
+setnames(pop18_tier_2_rural,names(pop18_tier_2_rural),varnames )
+
+drive_download("pop18_tier_3_rural.csv", type = "csv", overwrite = TRUE)
+pop18_tier_3_rural = read.csv("pop18_tier_3_rural.csv")
+pop18_tier_3_rural = data.frame(pop18_tier_3_rural$sum, pop18_tier_3_rural$GID_1)
+varnames<-c("pop_tier_3_rural", "GID_1")
+setnames(pop18_tier_3_rural,names(pop18_tier_3_rural),varnames )
+
+drive_download("pop18_tier_4_rural.csv", type = "csv", overwrite = TRUE)
+pop18_tier_4_rural = read.csv("pop18_tier_4_rural.csv")
+pop18_tier_4_rural = data.frame(pop18_tier_4_rural$sum, pop18_tier_4_rural$GID_1)
+varnames<-c("pop_tier_4_rural", "GID_1")
+setnames(pop18_tier_4_rural,names(pop18_tier_4_rural),varnames )
+
+elrates18 = Reduce(function(x,y) merge(x,y,by="GID_1",all=TRUE) ,list(elrates, pop18_tier_1_rural, pop18_tier_2_rural, pop18_tier_3_rural, pop18_tier_4_rural))
+elrates_BK_18 = elrates18
+
+elrates18=subset(elrates18, GID_0 != "ATF" & GID_0 != "EGY" & GID_0 != "ESH"& GID_0 != "ESP" & GID_0 != "LBY" & GID_0 != "MAR" & GID_0 != "MYT" & GID_0 != "SYC" & GID_0 != "COM" & GID_0 != "YEM" & GID_0 != "TUN" & GID_0 != "DZA")
+elrates18 = dplyr::filter(elrates18,  !is.na(GID_0))
+
+#6) calculate gini index of consumption among those with access within each province
+colist=unique(elrates18$GID_0)
+output_d_18=list()
+for (A in colist){
+  datin=subset(elrates18, elrates18$GID_0== A)
+  
+  datin$share_tier_1_rural=datin$pop_tier_1_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
+  datin$share_tier_2_rural=datin$pop_tier_2_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
+  datin$share_tier_3_rural=datin$pop_tier_3_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
+  datin$share_tier_4_rural=datin$pop_tier_4_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
+  
+  datin=data.frame(datin$GID_0, datin$GID_1, datin$share_tier_1_rural,datin$share_tier_2_rural,datin$share_tier_3_rural,datin$share_tier_4_rural)
+  
+  #reshape by making rows columns and by naming such columns after GID_1 of that row
+  datin = reshape(datin, direction="long", idvar=c("datin.GID_1", "datin.GID_0"), varying = c("datin.share_tier_1_rural", "datin.share_tier_2_rural", "datin.share_tier_3_rural", "datin.share_tier_4_rural"))
+  datin2 = reshape(datin, direction="wide", idvar=c("time"), timevar = c("datin.GID_1"))
+  datin3 = select(datin2, - matches("GID_0|time"))
+  
+  #calculate gini indexes
+  output = lapply(1:ncol(datin3), function(X){ineq(datin3[, X],type="Gini")})
+  output = unlist(output)
+  output = as.data.frame(rbind(output, colnames(datin3)))
+  output_d_18[[A]] = output
+  elrates18 = elrates_BK_18
+}
+
+#calculate summary statistics for the gini indexes in each country (mean, max, min, obs...)
+lis_18 = 1:length(output_d_18)
+
+fune_18 = function(X){  
+  as.data.frame(t(output_d_18[[X]][1, ]))
+}
+
+store_18 = lapply(lis_18, fune_18)
+
+#index of number-country to select which to visualise
+#View(colist)
+
+#summary statistics for inequality in consumption within provinces
+# i.e. here we see the within-province inequality in consumption for those with access
+#a distribution of the inequality within each region of the country
+functi_18 = function(x){
+  summary(as.numeric(levels(store_18[[x]]$output))[store_18[[x]]$output])
+}
+distribution_inequality_18 = lapply(c(1:43), functi_18)
+
+
+#what if we wanted to see the between province inequality in consumption for those with access?
+#simply calculate the gini of the last object
+#One figures which sums up inequality at the national level
+functi2_18= function(x){
+  ineq(as.numeric(levels(store_18[[x]]$output))[store_18[[x]]$output],type="Gini")
+}
+
+national_inequality_18 = lapply(c(1:43), functi2_18)
+
+
+##Column plot split of consumption (RURAL)
+data_cons = data.frame(elrates18$GID_0, elrates18$GID_1, elrates18$pop_tier_1_rural, elrates18$pop_tier_2_rural,elrates18$pop_tier_3_rural,elrates18$pop_tier_4_rural)
+varnames<-c("GID_0", "GID_1", "t1_18", "t2_18", "t3_18", "t4_18")
+setnames(data_cons,names(data_cons),varnames )
+
+dfm <- gather(data_cons, key=tier, value=value, 't1_18','t2_18','t3_18', 't4_18')
+
+dfm_sum = dfm %>% 
+  dplyr::group_by(GID_0, tier) %>% 
+  dplyr::summarise(value = sum(value))
+
+dfm_sum <- na.omit(dfm_sum)
+
+
+dfm_sum = subset(dfm_sum, dfm_sum$GID_0 == "MWI" | dfm_sum$GID_0 == "NGA" | dfm_sum$GID_0 == "UGA")
+
+dfm_sum$type = "Estimated"
+
+
+dfm_sum = data.table(dfm_sum)
+dfm_sum[, value := prop.table(value), by=GID_0]
+
+
+library(plyr)
+dfm_sum$tier = mapvalues(dfm_sum$tier, unique(dfm_sum$tier), c("1", "2", "3", "4"))
+
+dfm_sum = as.data.frame(dfm_sum)
+
+merger = dplyr::bind_rows(dfm_sum, all_real_rural)
+
+##
+
+merger = merger[complete.cases(merger), ]
+
+valid_rural = ggplot(merger, aes(x=as.factor(tier), y=value, group=type, fill=type)) +
+  geom_bar(stat="identity", position = position_dodge(preserve = "single")) +
+  theme_classic()+
+  facet_grid(rows = vars(GID_0))+
+  scale_fill_discrete(name="Value")+
+  scale_y_continuous(labels=percent, limits = c(0,1))+
+  xlab("KWh/day/household")+
+  ylab("Share of rural populaiton with access")+
+  scale_x_discrete(labels = c("<0.2 ", "<1", "<3.4", ">3.4"))
+
+##
+#Urban
+
+#1) Import data for populaiton and population without access
+drive_download("pop18.csv", type = "csv", overwrite = TRUE)
+pop18 = read.csv("pop18.csv")
+
+drive_download("pop16.csv", type = "csv", overwrite = TRUE)
+pop16 = read.csv("pop16.csv")
+
+drive_download("pop14.csv", type = "csv", overwrite = TRUE)
+pop14 = read.csv("pop14.csv")
+
+drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
+no_acc_18 = read.csv("no_acc_18.csv")
+
+drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
+no_acc_16 = read.csv("no_acc_16.csv")
+
+drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
+no_acc_14 = read.csv("no_acc_14.csv")
+
+#1.1) Merge different years, remove non Sub-Saharan countries and other misc provinces
+merged_14 = merge(pop14, no_acc_14, by=c("GID_1"), all=TRUE)
+merged_16 = merge(pop16, no_acc_16, by=c("GID_1"), all=TRUE)
+merged_18 = merge(pop18, no_acc_18, by=c("GID_1"), all=TRUE)
+
+merged_14=subset(merged_14, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "DJI" & GID_0.x != "STP")
+merged_16=subset(merged_16, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "DJI" & GID_0.x != "STP")
+merged_18=subset(merged_18, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "DJI" & GID_0.x != "STP")
+
+merged_14 = dplyr::filter(merged_14,  !is.na(GID_0.x))
+merged_16 = dplyr::filter(merged_16,  !is.na(GID_0.x))
+merged_18 = dplyr::filter(merged_18,  !is.na(GID_0.x))
+
+#2) Calculate province-level electrification rates and merge them into a single dataframe 
+merged_18$elrate=(1-(merged_18$sum.y / merged_18$sum.x))
+merged_16$elrate=(1-(merged_16$sum.y / merged_16$sum.x))
+merged_14$elrate=(1-(merged_14$sum.y / merged_14$sum.x))
+
+elrates = data.frame(merged_18$elrate, merged_16$elrate, merged_14$elrate, merged_14$GID_1, merged_14$GID_0.x)
+
+varnames<-c("elrate18", "elrate16", "elrate14", "GID_1", "GID_0")
+
+setnames(elrates,names(elrates),varnames )
+
+#2.1) Calculate the change in electrification rates over the two years considered
+elrates$eldiff = elrates$elrate18 - elrates$elrate14 
+elrates$eldiffpc = (elrates$elrate18 - elrates$elrate14) / elrates$elrate14
+
+#3) Calculate national electrification rates
+merged_14_countrylevel = merged_14 %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
+merged_14_countrylevel$elrate = (1-(merged_14_countrylevel$popnoacc/merged_14_countrylevel$pop))
+
+merged_16_countrylevel = merged_16 %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
+merged_16_countrylevel$elrate = (1-(merged_16_countrylevel$popnoacc/merged_16_countrylevel$pop))
+
+merged_18_countrylevel = merged_18 %>% group_by(GID_0.x) %>% dplyr::summarize(pop=sum(sum.x,na.rm = T), popnoacc=sum(sum.y,na.rm = T)) %>% ungroup()
+merged_18_countrylevel$elrate = (1-(merged_18_countrylevel$popnoacc/merged_18_countrylevel$pop))
+
+merged_diff=data.frame(merged_18_countrylevel$GID_0.x, (merged_18_countrylevel$elrate-merged_14_countrylevel$elrate), merged_18_countrylevel$elrate, merged_16_countrylevel$elrate, merged_14_countrylevel$elrate)
+merged_diff <- na.omit(merged_diff)
+varnames<-c("GID_0", "elrate_diff", "elrate18", "elrate16","elrate14")
+setnames(merged_diff,names(merged_diff),varnames )
+
+
+drive_download("pop18_tier_1_urban.csv", type = "csv", overwrite = TRUE)
+pop18_tier_1_urban = read.csv("pop18_tier_1_urban.csv")
+pop18_tier_1_urban = data.frame(pop18_tier_1_urban$sum, pop18_tier_1_urban$GID_1)
+varnames<-c("pop_tier_1_urban", "GID_1")
+setnames(pop18_tier_1_urban,names(pop18_tier_1_urban),varnames )
+
+drive_download("pop18_tier_2_urban.csv", type = "csv", overwrite = TRUE)
+pop18_tier_2_urban = read.csv("pop18_tier_2_urban.csv")
+pop18_tier_2_urban = data.frame(pop18_tier_2_urban$sum, pop18_tier_2_urban$GID_1)
+varnames<-c("pop_tier_2_urban", "GID_1")
+setnames(pop18_tier_2_urban,names(pop18_tier_2_urban),varnames )
+
+drive_download("pop18_tier_3_urban.csv", type = "csv", overwrite = TRUE)
+pop18_tier_3_urban = read.csv("pop18_tier_3_urban.csv")
+pop18_tier_3_urban = data.frame(pop18_tier_3_urban$sum, pop18_tier_3_urban$GID_1)
+varnames<-c("pop_tier_3_urban", "GID_1")
+setnames(pop18_tier_3_urban,names(pop18_tier_3_urban),varnames )
+
+drive_download("pop18_tier_4_urban.csv", type = "csv", overwrite = TRUE)
+pop18_tier_4_urban = read.csv("pop18_tier_4_urban.csv")
+pop18_tier_4_urban = data.frame(pop18_tier_4_urban$sum, pop18_tier_4_urban$GID_1)
+varnames<-c("pop_tier_4_urban", "GID_1")
+setnames(pop18_tier_4_urban,names(pop18_tier_4_urban),varnames )
+
+elrates18 = Reduce(function(x,y) merge(x,y,by="GID_1",all=TRUE) ,list(elrates, pop18_tier_1_urban, pop18_tier_2_urban, pop18_tier_3_urban, pop18_tier_4_urban))
+elrates_BK_18 = elrates18
+
+elrates18=subset(elrates18, GID_0 != "ATF" & GID_0 != "EGY" & GID_0 != "ESH"& GID_0 != "ESP" & GID_0 != "LBY" & GID_0 != "MAR" & GID_0 != "MYT" & GID_0 != "SYC" & GID_0 != "COM" & GID_0 != "YEM" & GID_0 != "TUN" & GID_0 != "DZA")
+elrates18 = dplyr::filter(elrates18,  !is.na(GID_0))
+
+#6) calculate gini index of consumption among those with access within each province
+colist=unique(elrates18$GID_0)
+output_d_18=list()
+
+for (A in colist){
+  datin=subset(elrates18, elrates18$GID_0== A)
+  
+  datin$share_tier_1_urban=datin$pop_tier_1_urban/(datin$pop_tier_1_urban+datin$pop_tier_2_urban+datin$pop_tier_3_urban+datin$pop_tier_4_urban)
+  datin$share_tier_2_urban=datin$pop_tier_2_urban/(datin$pop_tier_1_urban+datin$pop_tier_2_urban+datin$pop_tier_3_urban+datin$pop_tier_4_urban)
+  datin$share_tier_3_urban=datin$pop_tier_3_urban/(datin$pop_tier_1_urban+datin$pop_tier_2_urban+datin$pop_tier_3_urban+datin$pop_tier_4_urban)
+  datin$share_tier_4_urban=datin$pop_tier_4_urban/(datin$pop_tier_1_urban+datin$pop_tier_2_urban+datin$pop_tier_3_urban+datin$pop_tier_4_urban)
+  
+  datin=data.frame(datin$GID_0, datin$GID_1, datin$share_tier_1_urban,datin$share_tier_2_urban,datin$share_tier_3_urban,datin$share_tier_4_urban)
+  
+  #reshape by making rows columns and by naming such columns after GID_1 of that row
+  datin = reshape(datin, direction="long", idvar=c("datin.GID_1", "datin.GID_0"), varying = c("datin.share_tier_1_urban", "datin.share_tier_2_urban", "datin.share_tier_3_urban", "datin.share_tier_4_urban"))
+  datin2 = reshape(datin, direction="wide", idvar=c("time"), timevar = c("datin.GID_1"))
+  datin3 = select(datin2, - matches("GID_0|time"))
+  
+  #calculate gini indexes
+  output = lapply(1:ncol(datin3), function(X){ineq(datin3[, X],type="Gini")})
+  output = unlist(output)
+  output = as.data.frame(rbind(output, colnames(datin3)))
+  output_d_18[[A]] = output
+  elrates18 = elrates_BK_18
+}
+
+#calculate summary statistics for the gini indexes in each country (mean, max, min, obs...)
+lis_18 = 1:length(output_d_18)
+
+fune_18 = function(X){  
+  as.data.frame(t(output_d_18[[X]][1, ]))
+}
+
+store_18 = lapply(lis_18, fune_18)
+
+#index of number-country to select which to visualise
+#View(colist)
+
+#summary statistics for inequality in consumption within provinces
+# i.e. here we see the within-province inequality in consumption for those with access
+#a distribution of the inequality within each region of the country
+functi_18 = function(x){
+  summary(as.numeric(levels(store_18[[x]]$output))[store_18[[x]]$output])
+}
+distribution_inequality_18 = lapply(c(1:43), functi_18)
+
+
+#what if we wanted to see the between province inequality in consumption for those with access?
+#simply calculate the gini of the last object
+#One figures which sums up inequality at the national level
+functi2_18= function(x){
+  ineq(as.numeric(levels(store_18[[x]]$output))[store_18[[x]]$output],type="Gini")
+}
+
+national_inequality_18 = lapply(c(1:43), functi2_18)
+
+##Column plot split of consumption (urban)
+data_cons = data.frame(elrates18$GID_0, elrates18$GID_1, elrates18$pop_tier_1_urban, elrates18$pop_tier_2_urban,elrates18$pop_tier_3_urban,elrates18$pop_tier_4_urban)
+varnames<-c("GID_0", "GID_1", "t1_18", "t2_18", "t3_18", "t4_18")
+setnames(data_cons,names(data_cons),varnames )
+
+dfm <- gather(data_cons, key=tier, value=value, 't1_18','t2_18','t3_18', 't4_18')
+
+
+dfm_sum = dfm %>% 
+  dplyr::group_by(GID_0, tier) %>% 
+  dplyr::summarise(value = sum(value))
+
+dfm_sum <- na.omit(dfm_sum)
+
+merger_urban_mwi$GID_0 = "MWI"
+merger_urban_nga$GID_0 = "NGA"
+merger_urban_uga$GID_0 = "UGA"
+
+merger_urban_mwi = merger_urban_mwi %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_urban_mwi$value = merger_urban_mwi$value/sum(merger_urban_mwi$value)
+
+merger_urban_nga = merger_urban_nga %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_urban_nga$value = merger_urban_nga$value/sum(merger_urban_nga$value)
+
+
+merger_urban_uga = merger_urban_uga %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_urban_uga$value = merger_urban_uga$value/sum(merger_urban_uga$value)
+
+all_real_urban = rbind(merger_urban_mwi, merger_urban_nga, merger_urban_uga)
+all_real_urban$type = "Surveyed"
+all_real_urban$tier = as.factor(all_real_urban$tier)
+
+
+dfm_sum = subset(dfm_sum, dfm_sum$GID_0 == "MWI" | dfm_sum$GID_0 == "NGA" | dfm_sum$GID_0 == "UGA")
+
+dfm_sum$type = "Estimated"
+
+
+dfm_sum = data.table(dfm_sum)
+dfm_sum[, value := prop.table(value), by=GID_0]
+
+
+dfm_sum$tier = mapvalues(dfm_sum$tier, unique(dfm_sum$tier), c("1", "2", "3", "4"))
+
+dfm_sum = as.data.frame(dfm_sum)
+
+
+merger = dplyr::bind_rows(dfm_sum, all_real_urban)
+
+##
+
+merger = merger[complete.cases(merger), ]
+
+valid_urban = ggplot(merger, aes(x=as.factor(tier), y=value, group=type, fill=type)) +
+  geom_bar(stat="identity", position = position_dodge(preserve = "single")) +
+  theme_classic()+
+  facet_grid(rows = vars(GID_0))+
+  scale_y_continuous(labels=percent, limits = c(0,1))+
+  scale_fill_discrete(name="Value")+
+  xlab("KWh/day/household")+
+  ylab("Share of urban populaiton with access")+
+  scale_x_discrete(labels = c("<0.2 ", "<1", "<3.4", ">3.4"))
+
+pgrid = plot_grid(valid_urban + theme(legend.position="none"), valid_rural + theme(legend.position="none"), label_size = 10, label_x = c(0.25, 0.25),  hjust= 0, ncol=2, labels = c("Urban", "Rural"))
+legend <- get_legend(valid_urban)
+p <- plot_grid(pgrid, legend, ncol = 2, rel_widths = c(0.4, .1))
+ggsave("valid_cons.png", p, device = "png", width = 39, height = 17, units = "cm", scale=0.5)
