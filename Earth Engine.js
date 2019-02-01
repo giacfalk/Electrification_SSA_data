@@ -1,7 +1,7 @@
 //Earth Engine Script for: 
 //A High-Resolution Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 //Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-// Version: 28/01/18
+// Version: 01/02/18
 
 //Import VIIRS nighttime lights for 2018 and 2014 (also 2016 for validaiton purposes)
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
@@ -1097,6 +1097,20 @@ var popnoaccess17 = pop17.mask(lights18.eq(0))
 
 var changeinpopnoaccess = popnoaccess17.subtract(popnoaccess14)
 
+var changeinpopnoaccess = changeinpopnoaccess.toDouble().clip(Countries)
+
+Map.addLayer(changeinpopnoaccess)
+
+Export.image.toDrive({
+  image: changeinpopnoaccess,
+  description: 'changeinpopnoaccess',
+  folder: 'Inequality',
+  scale: 1000,
+  maxPixels: 10e12, 
+  fileFormat: 'GeoTIFF',
+  crs : 'EPSG:4326'
+});
+
 var changeinpopnoaccess = changeinpopnoaccess.reduceRegions({
     reducer: ee.Reducer.sum(),
     collection: Countries,
@@ -1207,8 +1221,6 @@ Export.table.toDrive({
 });   
 
 //
-
-var lights18 = lights18.divide(pop17)
 
 var lights18 = lights18.mask(lights18.gt(0))
 
@@ -1619,7 +1631,7 @@ var stackCollection = function(collection) {
 
 var stacked = stackCollection(pop_noaccess);
 
-Map.addLayer(stacked)
+//Map.addLayer(stacked)
 
 Export.image.toDrive({
   image: stacked,
@@ -1705,7 +1717,7 @@ var pop18_tier_4 =pop18_tier_4.where(pop18_tier_4.gt(1), replacement);
 
 var tiers_joint_rural = ee.ImageCollection([pop18_tier_1, pop18_tier_2, pop18_tier_3, pop18_tier_4]).mosaic()
 
-Map.addLayer(tiers_joint_rural)
+//Map.addLayer(tiers_joint_rural)
 
 ///
 
@@ -1777,11 +1789,11 @@ var pop18_tier_4 =pop18_tier_4.where(pop18_tier_4.gt(1), replacement);
 
 var tiers_joint_urban = ee.ImageCollection([pop18_tier_1, pop18_tier_2, pop18_tier_3, pop18_tier_4]).mosaic()
 
-Map.addLayer(tiers_joint_urban)
+//Map.addLayer(tiers_joint_urban)
 
 var tiers_joint = ee.ImageCollection([tiers_joint_rural, tiers_joint_urban]).mosaic()
 
-Map.addLayer(tiers_joint)
+//Map.addLayer(tiers_joint)
 
 Export.image.toDrive({
   image: tiers_joint,
@@ -1793,189 +1805,69 @@ Export.image.toDrive({
   crs : 'EPSG:4326'
 });
 
+///
+var grid10km = ee.FeatureCollection('users/giacomofalchetta/grid10km')
 
-//Count people in each tier
-var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.and(ee.Filter.neq('SUBREGION', 15), ee.Filter.eq('REGION', 2)))
+var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+var nl14 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
+var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
 
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
+var pop14 = ee.Image('users/giacomofalchetta/landscan2014');
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 
-var pop18 = pop18.mask(pop18_noaccess.gt(0).and(rurpop.gt(0)))
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
 
-var tier0_countpeople_rur = pop18.reduceRegions({
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median().clip(grid10km)
+
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl14.map(conditional);
+
+var nl14 = ee.ImageCollection(output).median().clip(grid10km)
+
+var popnoaccess14 = pop14.mask(pop14.gt(0).and(nl14.lt(0.05)))
+var popnoaccess18 = pop18.mask(pop18.gt(0).and(nl18.lt(0.05)))
+
+var popnoaccess14 = popnoaccess14.clip(grid10km)
+var popnoaccess18 = popnoaccess18.clip(grid10km)
+
+
+var changeinpopnoaccess = popnoaccess18.subtract(popnoaccess14)
+var changeinpopnoaccess = changeinpopnoaccess.clip(grid10km).toDouble()
+
+var grid10km = changeinpopnoaccess.reduceRegions({
   reducer: ee.Reducer.sum(),
-  collection: Countries
+  collection: grid10km,
+  scale: 1000,
 });
 
-var tier0_countpeople_rur = tier0_countpeople_rur.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier0_countpeople_rur,
-  description: 'tier0_countpeople_rur',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
-}); 
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(tiers_joint_rural.eq(1))
-
-var tier1_countpeople_rur = pop18.reduceRegions({
+var grid10km = popnoaccess18.reduceRegions({
   reducer: ee.Reducer.sum(),
-  collection: Countries
+  collection: grid10km,
+  scale: 1000,
 });
 
-var tier1_countpeople_rur = tier1_countpeople_rur.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier1_countpeople_rur,
-  description: 'tier1_countpeople_rur',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
-});   
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(tiers_joint_rural.eq(2))
-
-var tier2_countpeople_rur = pop18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: Countries
+var grid10km = tiers_joint.reduceRegions({
+  reducer: ee.Reducer.mean(),
+  collection: grid10km,
+  scale: 1000,
 });
 
-var tier2_countpeople_rur = tier2_countpeople_rur.select(['.*'],null,false);
+var grid10km = grid10km.select(['.*'],null,false);
 
 Export.table.toDrive({
-  collection: tier2_countpeople_rur,
-  description: 'tier2_countpeople_rur',
+  collection: grid10km,
+  description: 'grid_wdata',
   folder: 'Inequality',
-  fileFormat: 'CSV'
-});   
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(tiers_joint_rural.eq(3))
-
-var tier3_countpeople_rur = pop18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: Countries
-});
-
-var tier3_countpeople_rur = tier3_countpeople_rur.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier3_countpeople_rur,
-  description: 'tier3_countpeople_rur',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
-});   
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(tiers_joint_rural.eq(4))
-
-var tier4_countpeople_rur = pop18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: Countries
-});
-
-var tier4_countpeople_rur = tier4_countpeople_rur.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier4_countpeople_rur,
-  description: 'tier4_countpeople_rur',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
-});   
-
-var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.and(ee.Filter.neq('SUBREGION', 15), ee.Filter.eq('REGION', 2)))
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(pop18_noaccess.gt(0).and(urbpop.gt(0)))
-
-var tier0_countpeople_urb = pop18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: Countries
-});
-
-var tier0_countpeople_urb = tier0_countpeople_urb.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier0_countpeople_urb,
-  description: 'tier0_countpeople_urb',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
-}); 
-
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(tiers_joint.eq(1).and(urbpop.gt(0)))
-
-var tier1_countpeople_urb = pop18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: Countries
-});
-
-var tier1_countpeople_urb = tier1_countpeople_urb.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier1_countpeople_urb,
-  description: 'tier1_countpeople_urb',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
-});   
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(tiers_joint.eq(2).and(urbpop.gt(0)))
-
-var tier2_countpeople_urb = pop18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: Countries
-});
-
-var tier2_countpeople_urb = tier2_countpeople_urb.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier2_countpeople_urb,
-  description: 'tier2_countpeople_urb',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
-});   
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(tiers_joint.eq(3).and(urbpop.gt(0)))
-
-var tier3_countpeople_urb = pop18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: Countries
-});
-
-var tier3_countpeople_urb = tier3_countpeople_urb.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier3_countpeople_urb,
-  description: 'tier3_countpeople_urb',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
-});   
-
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1')
-
-var pop18 = pop18.mask(tiers_joint.eq(4).and(urbpop.gt(0)))
-
-var tier4_countpeople_urb = pop18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: Countries
-});
-
-var tier4_countpeople_urb = tier4_countpeople_urb.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: tier4_countpeople_urb,
-  description: 'tier4_countpeople_urb',
-  folder: 'Inequality',
-  fileFormat: 'CSV'
+  fileFormat: 'SHP'
 }); 

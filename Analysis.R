@@ -1,15 +1,15 @@
 ##R Script for: 
 ##A High-Resolution Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 ##Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-## Version: 28/01/18
+## Version: 01/02/18
 
-##NB This script must be ran after the Earth Engine (EE) javascript code. 
+##NB This script must be run after the Earth Engine (EE) javascript code. 
 #The googledrive package will call and download the files generated in EE. 
 #The script produces figures and statistics, and can be easily manipupalted to produce new metrics.
 #Supporting files and folder structure as in the GitHub repository are required for the script to run successfully.
 #Any question should be addressed to giacomo.falchetta@feem.it
 
-#Load required libraries (or install them, previosuly)
+#Load required libraries (install them, previosuly)
 library(raster)
 library(ncdf4)
 library(RNetCDF)
@@ -89,9 +89,9 @@ merged_18$elrate=(1-(merged_18$sum.y / merged_18$sum.x))
 merged_16$elrate=(1-(merged_16$sum.y / merged_16$sum.x))
 merged_14$elrate=(1-(merged_14$sum.y / merged_14$sum.x))
     
-elrates = data.frame(merged_18$elrate, merged_16$elrate, merged_14$elrate, merged_14$GID_1, merged_14$GID_0.x)
+elrates = data.frame(merged_18$elrate, merged_16$elrate, merged_14$elrate, merged_14$GID_1, merged_14$GID_0.x, merged_18$sum.x, merged_14$sum.x)
     
-varnames<-c("elrate18", "elrate16", "elrate14", "GID_1", "GID_0")
+varnames<-c("elrate18", "elrate16", "elrate14", "GID_1", "GID_0", "pop18", "pop14")
 
 setnames(elrates,names(elrates),varnames )
     
@@ -126,7 +126,7 @@ barplot = ggplot(merged_diff, aes(x=reorder(GID_0, -elrate_diff), y=elrate_diff)
       xlab("Country")+
       ylab("Change in electrificaiton rate (2014-2018)")
     
-ggsave("barplot.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
+ggsave("Barplot_progress.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
 
 #3.1) Plot change in urban and rural electricity access rates between the two years considered
 drive_download("pop18_rur.csv", type = "csv", overwrite = TRUE)
@@ -200,7 +200,7 @@ barplot = ggplot(merged_diff_rur, aes(x=reorder(GID_0, -elrate_diff), y=elrate_d
   xlab("Country")+
   ylab("Change in rural electrificaiton rate (2014-2018)")
 
-ggsave("barplot_rural.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
+ggsave("Barplot_progress_rural.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
 
 ##Urban
 drive_download("pop18_urb.csv", type = "csv", overwrite = TRUE)
@@ -273,7 +273,7 @@ barplot = ggplot(merged_diff_urb, aes(x=reorder(GID_0, -elrate_diff), y=elrate_d
   xlab("Country")+
   ylab("Change in urban electrificaiton rate (2014-2018)")
 
-ggsave("barplot_urban.png", plot = barplot, device = "png", width = 30, height = 12.5, units = "cm", scale=0.8)
+ggsave("Barplot_progress_urban.png", plot = barplot, device = "png", width = 30, height = 12.5, units = "cm", scale=0.8)
 
 #4) Calculate the total number of people without access in each country
 merged_noaccess = data.frame(merged_14_countrylevel$GID_0.x, merged_14_countrylevel$popnoacc,  merged_18_countrylevel$popnoacc)
@@ -318,7 +318,7 @@ comparisonwb = ggplot(merged_18_countrylevel, aes(x=elrate, y=elrate_wb.value/10
                formula = formula, parse = TRUE, size = 8)
 
 
-ggsave("comparisonwb.png", comparisonwb, device = "png", width = 20, height = 12, units = "cm", scale=1.2)
+ggsave("Comparisonwb.png", comparisonwb, device = "png", width = 20, height = 12, units = "cm", scale=1.2)
 
 #5.3) Validate urban and rural electrification rates with plots
 #Urban
@@ -340,7 +340,7 @@ comparisonwb_urban = ggplot(merged_16_countrylevel_urban, aes(x=elrate, y=elrate
   scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))
 
-ggsave("comparisonwb_urban.png", plot = comparisonwb_urban, device = "png", width = 24, height = 12, units = "cm", scale=1.3)
+ggsave("Comparisonwb_urban.png", plot = comparisonwb_urban, device = "png", width = 24, height = 12, units = "cm", scale=1.3)
 
 #Rural
 elrate_wb_rural <- wb(indicator = "EG.ELC.ACCS.RU.ZS", startdate = 2016, enddate = 2016)
@@ -361,10 +361,10 @@ comparisonwb_rural = ggplot(merged_16_countrylevel_rural, aes(x=elrate, y=elrate
   scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))
 
-ggsave("comparisonwb_rural.png", plot = comparisonwb_rural, device = "png", width = 24, height = 12, units = "cm", scale=1.3)
+ggsave("Comparisonwb_rural.png", plot = comparisonwb_rural, device = "png", width = 24, height = 12, units = "cm", scale=1.3)
 
 #6) Create plot for province-level electrification validation based on DHS Statcompiler survey data
-province = read.csv("D:\\Dropbox (FEEM)\\Current papers\\INEQUALITY ASSESSMENT\\Comparison StatsCompiler\\Parsing.csv")
+province = read.csv("shapefile/Parsing.csv")
 
 #DRC, Zambia, Burkina Faso 2014
 #Mozambique, Angola, Malawi, Zimbabwe, Nigeria 2015
@@ -431,7 +431,7 @@ ggplot(data=prova, aes(x=elrate, y=elaccess/100))+
                formula = formula, parse = TRUE, size = 8)
 
 
-ggsave("comparisontanzaniazoom.png", device = "png", width = 30, height = 20, units = "cm", scale=0.9)
+ggsave("Province_validation.png", device = "png", width = 30, height = 20, units = "cm", scale=0.9)
 
 formula = "elaccess/100  ~ elrate"
 model = lm(formula, data = prova)
@@ -449,7 +449,7 @@ geom_smooth(method = "lm")+
   xlab("Province-level electrification rate - DHS surveys data")+
   theme(axis.title=element_text(size=12), axis.title.y = element_text(size = 16), axis.title.x = element_text(size = 16), legend.text=element_text(size=14))
 
-ggsave("discrepancy.png", device = "png", width = 30, height = 20, units = "cm", scale=0.9)
+ggsave("Province_validation_discrepancy.png", device = "png", width = 30, height = 20, units = "cm", scale=0.9)
 
 #7) inequality in ACCESS: calculate indexes and produce Lorenz Curve graphs
 shapefile = st_read("shapefile/gadm36_1.shp")
@@ -465,8 +465,8 @@ lorenz=list()
 for (Z in colist){
 datin=subset(data, data$GID_0.x== Z)
 #sort data 
-out14 = sort(datin$elrate14)
-out18 = sort(datin$elrate18)
+out14 = sort(datin$elrate14*(datin$pop14/ave(datin$pop14, datin$GID_0.x, FUN=sum)))
+out18 = sort(datin$elrate18*(datin$pop18/ave(datin$pop18, datin$GID_0.x, FUN=sum)))
 
 #calculate within-country Gini-index in access rate ineqaulity
 ine14[[Z]] = ineq(out14,type="Gini")
@@ -556,13 +556,13 @@ theme_clean <- function(base_size = 12) {
 poly_rgn_df = poly_rgn_df[complete.cases(poly_rgn_df), ]
 
 #Produce map of inequality in access
-mapginiaccess = ggplot(data = poly_rgn_df, aes(long, lat, group=group, fill=g___G17)) +
+mapginiaccess = ggplot(data = poly_rgn_df, aes(long, lat, group=group, fill=g___G18)) +
   geom_polygon(colour = "white") +
   coord_map(projection = "mercator") +
   theme_clean()+
   scale_fill_gradient2(high = "darkred", midpoint = 0.5, mid="gold", low = "forestgreen", na.value = "grey50", guide = "colorbar",  name="Electr. acc. Gini")
 
-ggsave("mapginiaccess.png", plot = mapginiaccess, device = "png", width = 15, height = 20, units = "cm", scale=0.8)
+ggsave("Mapginiaccess.png", plot = mapginiaccess, device = "png", width = 15, height = 20, units = "cm", scale=0.8)
 
 
 #######
@@ -657,7 +657,7 @@ ruralvalid = ggplot(merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/1
                formula = formula, parse = TRUE, size = 8)
 
 
-ggsave("ruralvalid.png", ruralvalid, device = "png", width = 20, height = 12, units = "cm", scale=1.2)
+ggsave("Ruralvalid.png", ruralvalid, device = "png", width = 20, height = 12, units = "cm", scale=1.2)
 
 ##Define percentiles and thresholds of light per capita in urban and rural areas and plot histogram
 drive_download("pctiles_pc_urban.csv", type = "csv", overwrite = TRUE)
@@ -670,7 +670,7 @@ histogram = histogram[complete.cases(histogram$value), ]
 library(plyr)
 cdat <- ddply(histogram, "percentile", summarise, value.mean=median(value))
 
-histogram = ggplot(subset(histogram, value < 2), aes(x=value, fill=percentile)) +
+histogram1 = ggplot(subset(histogram, value < 2), aes(x=value, fill=percentile)) +
   theme_classic()+
   geom_density(alpha=.4) +
   geom_vline(data=cdat, aes(xintercept=value.mean,  colour=percentile),
@@ -680,7 +680,7 @@ histogram = ggplot(subset(histogram, value < 2), aes(x=value, fill=percentile)) 
   scale_color_discrete(name="Median")+
   scale_fill_discrete(name="Percentile")
 
-ggsave("histogram_urban.png", plot = histogram, device = "png", width = 20, height = 12, units = "cm", scale=0.8)
+ggsave("Histogram_urban.png", plot = histogram1, device = "png", width = 20, height = 12, units = "cm", scale=0.8)
 
 drive_download("pctiles_pc_rural.csv", type = "csv", overwrite = TRUE)
 histogram = read.csv("pctiles_pc_rural.csv")
@@ -692,7 +692,7 @@ histogram = histogram[complete.cases(histogram$value), ]
 library(plyr)
 cdat <- ddply(histogram, "percentile", summarise, value.mean=median(value))
 
-histogram = ggplot(subset(histogram, value < 1), aes(x=value, fill=percentile)) +
+histogram2 = ggplot(subset(histogram, value < 1), aes(x=value, fill=percentile)) +
   theme_classic()+
   geom_density(alpha=.4) +
   geom_vline(data=cdat, aes(xintercept=value.mean,  colour=percentile),
@@ -702,7 +702,12 @@ histogram = ggplot(subset(histogram, value < 1), aes(x=value, fill=percentile)) 
   scale_color_discrete(name="Median")+
   scale_fill_discrete(name="Percentile")
 
-ggsave("histogram_rural.png", plot = histogram, device = "png", width = 20, height = 12, units = "cm", scale=0.8)
+ggsave("Histogram_rural.png", plot = histogram2, device = "png", width = 20, height = 12, units = "cm", scale=0.8)
+
+pgrid = plot_grid(histogram1 + theme(legend.position="none"), histogram2 + theme(legend.position="none"), label_size = 10, label_x = c(0.17, 0.14),  hjust= 0, ncol=2, labels = c("Urban", "Rural"))
+legend <- get_legend(histogram1)
+p <- plot_grid(pgrid, legend, ncol = 2, rel_widths = c(0.4, .1))
+ggsave("Histograms_joint.png", p, device = "png", width = 35, height = 12, units = "cm", scale=0.7)
 
 ####################
 #Import rural 'consumption' tiers for 2018
@@ -824,13 +829,13 @@ barplot_consumption = ggplot() +
   theme_classic()+
   geom_bar(data = dfm_sum ,aes(x = GID_0, y = value, fill = tier), position = "fill",stat = "identity") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_fill_brewer(name = "Tier of consmption", labels = c("Tier 1", "Tier 2", "Tier 3", "Tier 4"), palette="Greens")+
+  scale_fill_brewer(name = "Tier of consmption", labels = c("Tier 1", "Tier 2", "Tier 3", "Tier 4"), palette="Blues")+
   xlab("Country")+
   ylab("Split of consumption tiers for those with access")
 
 barplot_consumption
 
-ggsave("barplot_consumption_rur.png", plot = barplot_consumption, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
+ggsave("Barplot_consumption_rur.png", plot = barplot_consumption, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
 
 ####################
 #Import urban consumption' tiers for 2018
@@ -952,42 +957,11 @@ barplot_consumption = ggplot() +
   theme_classic()+
   geom_bar(data = dfm_sum ,aes(x = GID_0, y = value, fill = tier), position = "fill",stat = "identity") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_fill_brewer(name = "Tier of consmption", labels = c("Tier 1", "Tier 2", "Tier 3", "Tier 4"), palette="Greens")+
+  scale_fill_brewer(name = "Tier of consmption", labels = c("Tier 1", "Tier 2", "Tier 3", "Tier 4"), palette="Blues")+
   xlab("Country")+
   ylab("Split of consumption tiers for those with access")
 
-ggsave("barplot_consumption_urb.png", plot = barplot_consumption, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
-
-###########
-#Map plot gini consumption
-ginis_consumption <- joinCountryData2Map(gini_cons_flat, joinCode = "ISO3",
-                                    nameJoinColumn = "ISO3")
-
-ginis_consumption@data=data.frame(ginis_consumption@data$ISO3, ginis_consumption@data$Gini_cons)
-writeOGR(layer="ginis_consumption", obj =ginis_consumption,  driver = "ESRI Shapefile", dsn=getwd())
-
-ginis_consumption = readOGR("ginis_consumption.shp")
-
-ginis_consumption@data$id = rownames(ginis_consumption@data)
-poly_rgn_df <- fortify(ginis_consumption, region = 'id')
-
-poly_rgn_df <- poly_rgn_df %>%
-  left_join(ginis_consumption@data, by = 'id')
-
-
-cnames <- aggregate(cbind(long, lat) ~ gn___G_, data=poly_rgn_df, 
-                    FUN=function(x)mean(range(x))) 
-
-poly_rgn_df = poly_rgn_df[complete.cases(poly_rgn_df), ]
-
-#EDIT: labels, colour, legend
-mapginicons = ggplot(data = poly_rgn_df, aes(long, lat, group=group, fill=gn___G_)) +
-  geom_polygon(colour = "white") +
-  coord_map(projection = "mercator") +
-  theme_clean()+
-  scale_fill_gradient2(high = "darkred", midpoint = 0.5, mid="gold", low = "forestgreen", na.value = "grey50", guide = "colorbar",  name="Electr. cons Gini")
-
-ggsave("mapginicons.png", plot = mapginicons, device = "png", width = 15, height = 20, units = "cm", scale=0.8)
+ggsave("Barplot_consumption_urb.png", plot = barplot_consumption, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
 
 #############################
 # Country-level sensitivity analysis
@@ -1072,7 +1046,7 @@ barplot = ggplot(DF1, aes(x=GID_0, y=value, fill=as.factor(variable)))+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
   ylab("Discrepancy in NTL vs. WB/SE4ALL electrification rate")
 
-ggsave("sensitivity_noise.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
+ggsave("Sensitivity_noise.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
 
 formula = "elrate_wb.value ~ elrate_base"
 summary(lm(data= merged_17_countrylevel, formula=formula))
@@ -1148,7 +1122,7 @@ barplot = ggplot(DF1, aes(x=merged_ls_countrylevel.GID_0.x, y=value, fill=as.fac
   scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
   ylab("Discrepancy in LS and WP vs. WB electr. rates")
 
-ggsave("sensitivity_population.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
+ggsave("Sensitivity_population.png", plot = barplot, device = "png", width = 30, height = 12, units = "cm", scale=0.8)
 
 formula = "elrate_wb.value ~ elrate"
 summary(lm(data= merged_ls_countrylevel, formula=formula))
@@ -1157,137 +1131,7 @@ formula = "elrate_wb.value ~ elrate"
 summary(lm(data= merged_wp_countrylevel, formula=formula))
 
 ##
-##Hotspots identification
-drive_download("changeinpopnoaccess1418.csv", type = "csv", overwrite = TRUE)
-changeinpopnoaccess = read.csv("changeinpopnoaccess1418.csv")
-
-drive_download("allAreas.csv", type = "csv", overwrite = TRUE)
-allAreas = read.csv("allAreas.csv")
-
-pops = merge(changeinpopnoaccess, allAreas, by = "GID_1")
-pops$changedensity = pops$sum / no_acc_14$sum
-
-pops=subset(pops, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "STP")
-pops=subset(pops, changedensity>0)
-
-shapefile = st_read("shapefile/gadm36_1.shp")
-shapefile = merge(shapefile, pops, by=c("GID_1"), all=TRUE)
-
-shapefile = st_simplify(shapefile, dTolerance = 0.05)
-
-###Hotspots with low consumption: provinces where electricity access is quite high but measured intensity is low
-#1) take elrate 18
-#drive_download("pop18.csv", type = "csv", overwrite = TRUE)
-pop18 = read.csv("pop18.csv")
-
-#drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
-no_acc_18 = read.csv("no_acc_18.csv")
-
-merged_18 = merge(pop18, no_acc_18, by=c("GID_1"), all=TRUE)
-
-merged_18=subset(merged_18, GID_0.x != "ATF" & GID_0.x != "EGY" & GID_0.x != "ESH"& GID_0.x != "ESP" & GID_0.x != "LBY" & GID_0.x != "MAR" & GID_0.x != "MYT" & GID_0.x != "SYC" & GID_0.x != "COM" & GID_0.x != "YEM" & GID_0.x != "TUN" & GID_0.x != "DZA" & GID_0.x != "SHN" & GID_0.x != "STP")
-
-merged_18 = dplyr::filter(merged_18,  !is.na(GID_0.x))
-
-merged_18$elrate=(1-(merged_18$sum.y / merged_18$sum.x))
-
-elrates = data.frame(merged_18$elrate, merged_18$GID_1, merged_18$GID_0.x)
-
-varnames<-c("elrate18", "GID_1", "GID_0")
-
-setnames(elrates,names(elrates),varnames )
-
-#2 calculate mean, non-zero per-capita sum of light
-drive_download("meanpercapitanonzero.csv", type = "csv", overwrite = TRUE)
-meanpercapitanonzero = read.csv("meanpercapitanonzero.csv")
-
-meanpercapitanonzero=subset(meanpercapitanonzero, GID_0 != "ATF" & GID_0 != "EGY" & GID_0 != "ESH"& GID_0 != "ESP" & GID_0 != "LBY" & GID_0 != "MAR" & GID_0 != "MYT" & GID_0 != "SYC" & GID_0 != "COM" & GID_0 != "YEM" & GID_0 != "TUN" & GID_0 != "DZA" & GID_0 != "SHN" & GID_0 != "STP")
-meanpercapitanonzero = dplyr::filter(meanpercapitanonzero,  !is.na(GID_0))
-
-merger = merge(meanpercapitanonzero, elrates, by="GID_1")
-merger$elrate18 = round(merger$elrate18, digits = 2)
-merger = subset(merger, merger$elrate18 > 0.5)
-
-shape = merge(shapefile, merger, by=c("GID_1"))
-
-shape = shape[
-  with(shape, order(mean)),
-  ]
-
-shape = shape[shape$mean < quantile(shape$mean, 0.5), ]
-
-shape = st_simplify(shape, dTolerance = 0.05)
-
-st_write(shape, "shape.shp", driver="ESRI Shapefile")
-st_write(shapefile, "shape2.shp", driver="ESRI Shapefile")
-
-map1 = ggplot() +
-  ggthemes::theme_map()+
-  geom_sf(data = shapefile, aes(fill = changedensity))+
-  scale_fill_continuous(limits=c(0,1), low="#F5D0A9", high="#DF0101", name="% increase in \n pop. without access \n (2014-2018)", labels = percent)+
-  theme(plot.margin=grid::unit(c(0,0,0,0), "mm"), panel.grid.major = element_line(colour = 'transparent'))
-
-map2 = ggplot() +
-  ggthemes::theme_map()+
-  geom_sf(data=shapefile, fill="#737373")+
-  geom_sf(data = shape, aes(fill = mean))+
-  scale_fill_continuous(low="#003366", high="#3399ff", name="Mean light per capita")+
-  theme(plot.margin=grid::unit(c(0,0,0,0), "mm"), panel.grid.major = element_line(colour = 'transparent'))
-
-
-ggsave("maps.png", plot_grid(map1, map2, label_size = 10, hjust= 0, ncol=2)
-       , device = "png", width = 30, height = 30, units = "cm", scale=0.8)
-
-##
-drive_download("isrural.csv", type = "csv", overwrite = TRUE)
-isrural= read.csv("isrural.csv")
-
-isrural=merge(isrural, allAreas, by="GID_1")
-isrural$ruralshare=(isrural$count / (isrural$area/1000000))
-
-drive_download("changeinlight.csv", type = "csv", overwrite = TRUE)
-changeinlight= read.csv("changeinlight.csv")
-
-changeinlight=subset(changeinlight, GID_0 != "ATF" & GID_0 != "EGY" & GID_0 != "ESH"& GID_0 != "ESP" & GID_0 != "LBY" & GID_0 != "MAR" & GID_0 != "MYT" & GID_0 != "SYC" & GID_0 != "COM" & GID_0 != "YEM" & GID_0 != "TUN" & GID_0 != "DZA" & GID_0 != "SHN" & GID_0 != "DJI" & GID_0 != "STP")
-changeinlight = dplyr::filter(changeinlight,  !is.na(GID_0))
-
-pops = merge(changeinlight, isrural, by = "GID_1")
-
-pops.urban = subset(pops, pops$ruralshare < 0.75)
-pops.urban = pops.urban[
-  with(pops.urban, order(-median)),
-  ]
-pops.urban2 = head(pops.urban,25)
-
-changeurban = ggplot(data=pops.urban2, aes(x=reorder(NAME_1.x, -median), y = median))+
-  geom_bar(stat="identity", position = "dodge",  fill = "#0099cc", alpha=0.7)+
-  theme_classic()+
-  geom_text(aes(label = GID_0.x), position=position_dodge(width=0.9), vjust=-1, size=2)+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8), axis.text.y = element_text(size = 6),text = element_text(size=7))+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
-  xlab("Province and country")+
-  ylab("Median change in per-capita light intensity (2014-2018)")
-
-pops.rural = subset(pops, pops$ruralshare > 0.75)
-pops.rural = pops.rural[
-  with(pops.rural, order(-median)),
-  ]
-pops.rural2 = head(pops.rural,25)
-
-changerural = ggplot(data=pops.rural2, aes(x=reorder(NAME_1.x, -median), y = median))+
-  geom_bar(stat="identity", position = "dodge",  fill = "#ffcc00", alpha=0.7)+
-  theme_classic()+
-  geom_text(aes(label = GID_0.x), position=position_dodge(width=0.9), vjust=-1, size=2)+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8), axis.text.y = element_text(size = 6),text = element_text(size=7))+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
-  xlab("Province and country")+
-  ylab("Median change in per-capita light intensity (2014-2018)")
-
-
-ggsave("plot.png", plot_grid(changeurban, changerural, labels=c("Urban", "Rural"), label_size = 10, hjust= 0, nrow =2)
-       , device = "png", width = 22, height = 25, units = "cm", scale=0.8)
-
-##
+#Consumption tiers validation 
 
 geovars = read.csv('validation/HouseholdGeovariablesIHS4.csv')
 
@@ -1854,4 +1698,32 @@ valid_urban = ggplot(merger, aes(x=as.factor(tier), y=value, group=type, fill=ty
 pgrid = plot_grid(valid_urban + theme(legend.position="none"), valid_rural + theme(legend.position="none"), label_size = 10, label_x = c(0.25, 0.25),  hjust= 0, ncol=2, labels = c("Urban", "Rural"))
 legend <- get_legend(valid_urban)
 p <- plot_grid(pgrid, legend, ncol = 2, rel_widths = c(0.4, .1))
-ggsave("valid_cons.png", p, device = "png", width = 39, height = 17, units = "cm", scale=0.5)
+ggsave("Valid_cons.png", p, device = "png", width = 39, height = 17, units = "cm", scale=0.5)
+
+###
+#Hotspots identification
+#Steepest declining access rates
+grid10km_sh = read_sf("shapefile/grid_wdata.shp")
+v = colnames(grid10km_sh)
+v[9] = "changeinnoaccess"
+colnames(grid10km_sh) = v
+
+# keep only pixels in top 25%
+grid10km_sh_pos=subset(grid10km_sh, grid10km_sh$changeinnoaccess>0)
+quantile(grid10km_sh_pos$changeinnoaccess, probs = seq(0, 1, by= 0.1))
+zonal_top25 = subset(grid10km_sh_pos, grid10km_sh_pos$changeinnoaccess > 1735)
+
+#Export to QGIS fot plotting
+write_sf(zonal_top25, "shapefile/zonal_top25.shp")
+
+
+#Latent demand
+###########
+grid10km_sh$elrate=(1-(grid10km_sh$noaccess/grid10km_sh$pop))
+
+grid10km_sh_pos=subset(grid10km_sh, grid10km_sh$meantier>0)
+
+summary(grid10km_sh_pos$meantier)
+zonal_latentdemand = subset(grid10km_sh_pos, grid10km_sh_pos$elrate > 0.5 & grid10km_sh_pos$meantier < 0.05556)
+
+write_sf(zonal_latentdemand, "shapefile/zonal_latent.shp")
