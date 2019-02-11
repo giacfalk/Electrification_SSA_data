@@ -1,7 +1,7 @@
 ##R Script for: 
 ##A High-Resolution Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 ##Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-## Version: 01/02/18
+## Version: 11/02/18
 
 ##NB This script must be run after the Earth Engine (EE) javascript code. 
 #The googledrive package will call and download the files generated in EE. 
@@ -9,7 +9,7 @@
 #Supporting files and folder structure as in the GitHub repository are required for the script to run successfully.
 #Any question should be addressed to giacomo.falchetta@feem.it
 
-#Load required libraries (install them, previosuly)
+#Load required libraries (or install them, previosuly)
 library(raster)
 library(ncdf4)
 library(RNetCDF)
@@ -34,6 +34,9 @@ library(rgdal)
 library(ggthemes)
 library(RColorBrewer)
 library(gtools)
+
+#Google Drive authentication (to be run before launching the entire script)
+drive_find(n_max = 30)
 
 #0) Generate the NetCDF4 dataset for people without access
 drive_download("pop_noaccess-0000000000-0000014848.tif", type = "tif", overwrite = TRUE)
@@ -308,8 +311,8 @@ comparisonwb = ggplot(merged_18_countrylevel, aes(x=elrate, y=elrate_wb.value/10
   scale_colour_continuous(name = "PPP per-capita GDP", type = "viridis", trans = "log", breaks = my_breaks, labels = my_breaks)+
   theme_classic()+
   geom_abline()+
-  ylab("Electrficiation rate (ESMAP/World Bank)")+
-  xlab("Electrification rate (Estimated)")+
+  ylab("Country-level electrification rate - ESMAP/World Bank")+
+  xlab("Country-level electrification rate - Estimated")+
   scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
   theme(axis.title=element_text(size=12), axis.title.y = element_text(size = 14), axis.title.x = element_text(size = 14), legend.text=element_text(size=14))+
@@ -318,50 +321,7 @@ comparisonwb = ggplot(merged_18_countrylevel, aes(x=elrate, y=elrate_wb.value/10
                formula = formula, parse = TRUE, size = 8)
 
 
-ggsave("Comparisonwb.png", comparisonwb, device = "png", width = 20, height = 12, units = "cm", scale=1.2)
-
-#5.3) Validate urban and rural electrification rates with plots
-#Urban
-elrate_wb_urban <- wb(indicator = "EG.ELC.ACCS.UR.ZS", startdate = 2016, enddate = 2016)
-elrate_wb_urban = data.frame(elrate_wb_urban$iso3c, elrate_wb_urban$value)
-merged_16_countrylevel_urban = merge(merged_16_countrylevel, elrate_wb_urban, by.x = "GID_0.x", by.y = "elrate_wb_urban.iso3c")
-
-comparisonwb_urban = ggplot(merged_16_countrylevel_urban, aes(x=elrate, y=elrate_wb_urban.value/100))+
-  geom_point(data=merged_16_countrylevel_urban, aes(x=elrate, y=elrate_wb_urban.value/100, size=pop/1e06), alpha=0.7)+
-  geom_label_repel(data=merged_16_countrylevel_urban, aes(x=elrate, y=elrate_wb_urban.value/100, label = GID_0.x),
-                   box.padding   = 0.2, 
-                   point.padding = 0.3,
-                   segment.color = 'grey50') +
-  scale_size_continuous(range = c(3, 9), name = "Total pop. (million)")+
-  theme_classic()+
-  geom_abline()+
-  ylab("Urban electrficiation rate (IEA World Bank 2016)")+
-  xlab("Urban electrification rate (NTL estimate 2016)")+
-  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))
-
-ggsave("Comparisonwb_urban.png", plot = comparisonwb_urban, device = "png", width = 24, height = 12, units = "cm", scale=1.3)
-
-#Rural
-elrate_wb_rural <- wb(indicator = "EG.ELC.ACCS.RU.ZS", startdate = 2016, enddate = 2016)
-elrate_wb_rural = data.frame(elrate_wb_rural$iso3c, elrate_wb_rural$value)
-merged_16_countrylevel_rural = merge(merged_16_countrylevel, elrate_wb_rural, by.x = "GID_0.x", by.y = "elrate_wb_rural.iso3c")
-
-comparisonwb_rural = ggplot(merged_16_countrylevel_rural, aes(x=elrate, y=elrate_wb_rural.value/100))+
-  geom_point(data=merged_16_countrylevel_rural, aes(x=elrate, y=elrate_wb_rural.value/100, size=pop/1e06), alpha=0.7)+
-  geom_label_repel(data=merged_16_countrylevel_rural, aes(x=elrate, y=elrate_wb_rural.value/100, label = GID_0.x),
-                   box.padding   = 0.2, 
-                   point.padding = 0.3,
-                   segment.color = 'grey50') +
-  scale_size_continuous(range = c(3, 9), name = "Total pop. (million)")+
-  theme_classic()+
-  geom_abline()+
-  ylab("Rural electrficiation rate (IEA World Bank 2016)")+
-  xlab("Rural electrification rate (NTL estimate 2016)")+
-  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))
-
-ggsave("Comparisonwb_rural.png", plot = comparisonwb_rural, device = "png", width = 24, height = 12, units = "cm", scale=1.3)
+ggsave("Comparison_national.png", comparisonwb, device = "png", width = 20, height = 12, units = "cm", scale=1.2)
 
 #6) Create plot for province-level electrification validation based on DHS Statcompiler survey data
 province = read.csv("shapefile/Parsing.csv")
@@ -371,19 +331,19 @@ province = read.csv("shapefile/Parsing.csv")
 #Burundi, Ethiopia, Ghana, Sierra Leone 2016
 # Senegal, Togo, Tanzania 2017
 
-drive_download("pop18.csv", type = "csv", overwrite = TRUE)
+drive_download("pop18_valid.csv", type = "csv", overwrite = TRUE)
 pop18 = read.csv("pop18_valid.csv")
 
-drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_14_valid.csv", type = "csv", overwrite = TRUE)
 no_acc_14 = read.csv("no_acc_14_valid.csv")
 
-drive_download("no_acc_15.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_15_valid.csv", type = "csv", overwrite = TRUE)
 no_acc_15 = read.csv("no_acc_15_valid.csv")
 
-drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_16_valid.csv", type = "csv", overwrite = TRUE)
 no_acc_16 = read.csv("no_acc_16_valid.csv")
 
-drive_download("no_acc_17.csv", type = "csv", overwrite = TRUE)
+drive_download("no_acc_17_valid.csv", type = "csv", overwrite = TRUE)
 no_acc_17 = read.csv("no_acc_17_valid.csv")
 
 #Merge with corresponding year, clean
@@ -421,17 +381,18 @@ ggplot(data=prova, aes(x=elrate, y=elaccess/100))+
   geom_abline()+
   scale_size_continuous(range = c(3, 14), name = "Total pop. (million)")+
   scale_colour_discrete(name = "Country")+
-  ylab("Province-level electrification rate - DHS surveys data")+
-  xlab("Province-level electrification rate - NTL estimate)")+
+  ylab("Province-level electrification rate - USAID/DHS surveys data")+
+  xlab("Province-level electrification rate - Estimated")+
   scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1))+
-  theme(axis.title=element_text(size=12), axis.title.y = element_text(size = 16), axis.title.x = element_text(size = 16), legend.text=element_text(size=14))+
+  guides(colour = guide_legend(override.aes = list(size=7), ncol=2))+
+  theme(axis.title=element_text(size=12), axis.title.y = element_text(size = 14), axis.title.x = element_text(size = 14), legend.text=element_text(size=10))+
   stat_poly_eq(aes(label = paste(..rr.label..)), 
                label.x.npc = "right", label.y.npc = 0.15,
                formula = formula, parse = TRUE, size = 8)
 
 
-ggsave("Province_validation.png", device = "png", width = 30, height = 20, units = "cm", scale=0.9)
+ggsave("Comparison_province.png", device = "png", width = 20, height = 12, units = "cm", scale=1.2)
 
 formula = "elaccess/100  ~ elrate"
 model = lm(formula, data = prova)
@@ -493,8 +454,8 @@ lorenz[[Z]] = ggplot() +
   geom_line(data = databoth, aes(x=p18, y=difference, color="black"), size=1, alpha=0.8)+
   scale_color_discrete(name = "Legend", labels = c("Difference", "2018", "2014"))+
   geom_hline(yintercept = 0, alpha=0.5)+
-  scale_x_continuous(name="Cumulative share of provinces", limits=c(0,1)) + 
-  scale_y_continuous(name="Electricity access rate", limits=c(-0.1,1), sec.axis = sec_axis(trans= ~ .)) +
+  scale_x_continuous(name="Cum. share of provinces from low to high electrified", limits=c(0,1)) + 
+  scale_y_continuous(name="Cum. share of electricity access", limits=c(-0.1,1), sec.axis = sec_axis(trans= ~ .)) +
   geom_abline()+
   geom_point(data = out_df18, aes(x=p18, y=L18), size=0.3)+
   geom_point(data = out_df14, aes(x=p14, y=L14), size=0.3)+
@@ -612,22 +573,20 @@ popt = rbind(popt0, popt1, popt2, popt3, popt4, popt5)
 
 #
 
-merged_14 = merge(popu, popt, by=c("ISO3"), all=TRUE)
+merged = merge(popu, popt, by=c("ISO3"), all=TRUE)
 
-merged_14$urbrate = merged_14$sum.x / merged_14$sum.y
+merged$urbrate = merged$sum.x / merged$sum.y
 
 elrate_wb <- wb(indicator = "SP.URB.TOTL.IN.ZS", startdate = 2017, enddate = 2017)
 
 elrate_wb = data.frame(elrate_wb$iso3c, elrate_wb$value)
 
-merged_14_countrylevel = merge(merged_14, elrate_wb, by.x = "ISO3", by.y = "elrate_wb.iso3c")
+merged_countrylevel = merge(merged, elrate_wb, by.x = "ISO3", by.y = "elrate_wb.iso3c")
 
-merged_14_countrylevel$discrepancy = merged_14_countrylevel$elrate_wb.value / 100 - merged_14_countrylevel$urbrate
-
-merged_14_countrylevel = merge(merged_14_countrylevel, merged_18_countrylevel, by.x="ISO3", by.y="GID_0.x")
+merged_countrylevel$discrepancy = merged_countrylevel$elrate_wb.value / 100 - merged_countrylevel$urbrate
 
 formula = "elrate_wb.value/100 ~ urbrate"
-summary(lm(data= merged_14_countrylevel, formula=formula))
+summary(lm(data= merged_countrylevel, formula=formula))
 
 formula = y ~ x
 
@@ -635,11 +594,14 @@ my_breaks = c(1000, 2500, 7500)
 
 gdppc <- wb(indicator = "NY.GDP.PCAP.PP.KD", startdate = 2016, enddate = 2016)
 gdppc = data.frame(gdppc$iso3c, gdppc$value)
-merged_14_countrylevel = merge(merged_14_countrylevel, gdppc, by.x = "ISO3", by.y = "gdppc.iso3c")
+merged_countrylevel = merge(merged_countrylevel, gdppc, by.x = "ISO3", by.y = "gdppc.iso3c")
 
-ruralvalid = ggplot(merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100))+
-  geom_point(data=merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100, size=pop/1e06, colour=gdppc.value), alpha=0.7)+
-  geom_label_repel(data=merged_14_countrylevel, aes(x=urbrate, y = elrate_wb.value/100, label = ISO3),
+library(ggrepel)
+library(ggpmisc)
+
+ruralvalid = ggplot(merged_countrylevel, aes(x=urbrate, y = elrate_wb.value/100))+
+  geom_point(data=merged_countrylevel, aes(x=urbrate, y = elrate_wb.value/100, size=sum.y/1e06, colour=gdppc.value), alpha=0.7)+
+  geom_label_repel(data=merged_countrylevel, aes(x=urbrate, y = elrate_wb.value/100, label = ISO3),
                    box.padding   = 0.2, 
                    point.padding = 0.3,
                    segment.color = 'grey50') +
