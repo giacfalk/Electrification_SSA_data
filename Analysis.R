@@ -1667,7 +1667,7 @@ ggsave("Valid_cons.png", p, device = "png", width = 39, height = 17, units = "cm
 #Steepest declining access rates
 grid10km_sh = read_sf("shapefile/grid_wdata.shp")
 v = colnames(grid10km_sh)
-v[9] = "changeinnoaccess"
+v[5] = "changeinnoaccess"
 colnames(grid10km_sh) = v
 
 # keep only pixels in top 25%
