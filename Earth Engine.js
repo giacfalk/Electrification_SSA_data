@@ -1,7 +1,7 @@
 //Earth Engine Script for: 
 //A Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 //Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-// Version: 11/02/18
+// Version: 14/02/18
 
 //Import VIIRS nighttime lights for 2018 and 2014 (also 2016 for validaiton purposes) and provinces shapefile
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");

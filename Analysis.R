@@ -632,7 +632,8 @@ histogram = histogram[complete.cases(histogram$value), ]
 library(plyr)
 cdat <- ddply(histogram, "percentile", summarise, value.mean=median(value))
 
-histogram1 = ggplot(subset(histogram, value < 2), aes(x=value, fill=percentile)) +
+histogram1 = ggplot(subset(histogram, value < 1.5), aes(x=value, fill=percentile)) +
+  scale_x_continuous(limits = c(0,1.5))+
   theme_classic()+
   geom_density(alpha=.4) +
   geom_vline(data=cdat, aes(xintercept=value.mean,  colour=percentile),
@@ -654,9 +655,10 @@ histogram = histogram[complete.cases(histogram$value), ]
 library(plyr)
 cdat <- ddply(histogram, "percentile", summarise, value.mean=median(value))
 
-histogram2 = ggplot(subset(histogram, value < 1), aes(x=value, fill=percentile)) +
+histogram2 = ggplot(subset(histogram, value < 1.5), aes(x=value, fill=percentile)) +
   theme_classic()+
   geom_density(alpha=.4) +
+  scale_x_continuous(limits = c(0,1.5))+
   geom_vline(data=cdat, aes(xintercept=value.mean,  colour=percentile),
              linetype="dashed", size=1)+
   xlab(TeX("Radiance ($\\mu W \\cdot cm^{-2} \\cdot sr^{-1}$)"))+
@@ -666,10 +668,10 @@ histogram2 = ggplot(subset(histogram, value < 1), aes(x=value, fill=percentile))
 
 ggsave("Histogram_rural.png", plot = histogram2, device = "png", width = 20, height = 12, units = "cm", scale=0.8)
 
-pgrid = plot_grid(histogram1 + theme(legend.position="none"), histogram2 + theme(legend.position="none"), label_size = 10, label_x = c(0.17, 0.14),  hjust= 0, ncol=2, labels = c("Urban", "Rural"))
+pgrid = plot_grid(histogram1 + theme(legend.position="none"), histogram2 + theme(legend.position="none"), label_size = 10, label_x = c(0.15, 0.15), ncol=1, labels = c("Urban", "Rural"))
 legend <- get_legend(histogram1)
-p <- plot_grid(pgrid, legend, ncol = 2, rel_widths = c(0.4, .1))
-ggsave("Histograms_joint.png", p, device = "png", width = 35, height = 12, units = "cm", scale=0.7)
+p <- plot_grid(pgrid, legend, ncol = 2, rel_widths = c(0.6, .15))
+ggsave("Histograms_joint.png", p, device = "png", width = 18, height = 24, units = "cm", scale=0.7)
 
 ####################
 #Import rural 'consumption' tiers for 2018
@@ -1338,9 +1340,8 @@ for (A in colist){
   datin$share_tier_2_rural=datin$pop_tier_2_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
   datin$share_tier_3_rural=datin$pop_tier_3_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
   datin$share_tier_4_rural=datin$pop_tier_4_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
-  
+
   datin=data.frame(datin$GID_0, datin$GID_1, datin$share_tier_1_rural,datin$share_tier_2_rural,datin$share_tier_3_rural,datin$share_tier_4_rural)
-  
   #reshape by making rows columns and by naming such columns after GID_1 of that row
   datin = reshape(datin, direction="long", idvar=c("datin.GID_1", "datin.GID_0"), varying = c("datin.share_tier_1_rural", "datin.share_tier_2_rural", "datin.share_tier_3_rural", "datin.share_tier_4_rural"))
   datin2 = reshape(datin, direction="wide", idvar=c("time"), timevar = c("datin.GID_1"))
@@ -1405,7 +1406,7 @@ dfm_sum$type = "Estimated"
 
 
 dfm_sum = data.table(dfm_sum)
-dfm_sum[, value := prop.table(value), by=GID_0]
+dfm_sum[, share := prop.table(value), by=GID_0]
 
 
 library(plyr)
@@ -1419,7 +1420,7 @@ merger = dplyr::bind_rows(dfm_sum, all_real_rural)
 
 merger = merger[complete.cases(merger), ]
 
-valid_rural = ggplot(merger, aes(x=as.factor(tier), y=value, group=type, fill=type)) +
+valid_rural = ggplot(merger, aes(x=as.factor(tier), y=share, group=type, fill=type)) +
   geom_bar(stat="identity", position = position_dodge(preserve = "single")) +
   theme_classic()+
   facet_grid(rows = vars(GID_0))+
