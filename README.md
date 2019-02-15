@@ -1,4 +1,4 @@
-# Script and data from: "A High-Resolution, Updatable, Reproducible Gridded Dataset to Assess Progress towards Electrification inSub-Saharan Africa"
+# Script and data from: "A High-Resolution Gridded Dataset to Assess Electrification in Sub-Saharan Africa"
 
 This repository hosts:
 
@@ -11,12 +11,13 @@ This repository hosts:
       
  In order to replicate the analysis, the following steps are required:
  
- - Create a Google account if you do not have one, and request to have Earth Engine enables (https://signup.earthengine.google.com/#!/)
- - Make sure your Google Drive works and has enough free cloud storage space
- - Either obtain access to the LandScan population data by applying for an account (https://landscan.ornl.gov/user/apply), or use the WorldPop data, which is already accessible from the script in this repository without further steps.
- - Run the JavaScript file in Earth Engine
- - Download the supporting files along with the R script
- - Run the R script, which will produce the analysis, plots contained in the paper, and the output ncdf4 file
+- Create a Google account, if you do not have one, and make a request for Earth Engine access via https://signup.earthengine.google.com.
+- Make sure your Google Drive has enough free cloud storage space.
+- Either obtain access to the LandScan population data by applying for an account (https://landscan.ornl.gov/user/apply), or use the WorldPop data, which is accessible from the script in this repository without further steps.
+- Download the JavaScipt and R scripts and the supporitng files hosted at https://github.com/giacfalk/Electrification_SSA_data
+- Run the JavaScript file in Google Earth Engine
+- Download the supporting files along with the R script
+- Run the R script, which reproduce the analysis, plots contained in the paper, and the output ncdf4 files.
 
 Giacomo Falchetta, 2019
 
