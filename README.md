@@ -19,5 +19,5 @@ This repository hosts:
 - Download the supporting files along with the R script
 - Run the R script, which reproduce the analysis, plots contained in the paper, and the output ncdf4 files.
 
-Giacomo Falchetta, 2019
+Source code-related issues should be opened directly on GitHub. Broader questions of the methods should be addressed to giacomo.falchetta@feem.it
 
