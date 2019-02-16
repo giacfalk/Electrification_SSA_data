@@ -1125,8 +1125,8 @@ merger_rural_mwi = subset(merger, merger$urban==2 & hh_f26b ==5)
 merger_rural_mwi=subset(merger_rural_mwi, merger_rural_mwi$adjexpenditure > 0)
 merger_urban_mwi=subset(merger_urban_mwi, merger_urban_mwi$adjexpenditure > 0)
 
-merger_urban_mwi$adjexpenditure = (merger_urban_mwi$adjexpenditure/31)/24
-merger_rural_mwi$adjexpenditure = (merger_rural_mwi$adjexpenditure/31)/35
+merger_urban_mwi$adjexpenditure = (merger_urban_mwi$adjexpenditure/30)/35
+merger_rural_mwi$adjexpenditure = (merger_rural_mwi$adjexpenditure/30)/26
 vettore = c(0.012, 0.2, 1, 3.4, Inf)
 
 merger_urban_mwi$tier <- as.numeric(cut(merger_urban_mwi$adjexpenditure, breaks = vettore, 
@@ -1157,8 +1157,8 @@ merger_rural_nga = subset(merger, merger$urban==2 & s11q25b ==3)
 merger_rural_nga=subset(merger_rural_nga, merger_rural_nga$s11q25a > 0)
 merger_urban_nga=subset(merger_urban_nga, merger_urban_nga$s11q25a > 0)
 
-merger_urban_nga$s11q25a = merger_urban_nga$s11q25a/31/8
-merger_rural_nga$s11q25a = merger_rural_nga$s11q25a/31/14
+merger_urban_nga$s11q25a = merger_urban_nga$s11q25a/30/12
+merger_rural_nga$s11q25a = merger_rural_nga$s11q25a/30/7
 vettore = c(0.012, 0.2, 1, 3.4, Inf)
 
 merger_urban_nga$tier <- as.numeric(cut(merger_urban_nga$s11q25a, breaks = vettore, 
@@ -1189,8 +1189,8 @@ merger_rural_uga = subset(merger, merger$urban==0)
 merger_rural_uga=subset(merger_rural_uga, merger_rural_uga$h10q4 > 0)
 merger_urban_uga=subset(merger_urban_uga, merger_urban_uga$h10q4 > 0)
 
-merger_urban_uga$h10q4 = merger_urban_uga$h10q4/31
-merger_rural_uga$h10q4 = merger_rural_uga$h10q4/31
+merger_urban_uga$h10q4 = merger_urban_uga$h10q4/30
+merger_rural_uga$h10q4 = merger_rural_uga$h10q4/30
 vettore = c(0.012, 0.2, 1, 3.4, Inf)
 
 
@@ -1209,22 +1209,26 @@ merger_rural_uga=subset(merger_rural_uga, merger_rural_uga$tier > 0)
 
 #
 #1) Import data for populaiton and population without access
-drive_download("pop18.csv", type = "csv", overwrite = TRUE)
+##
+#rural
+
+#1) Import data for populaiton and population without access
+#drive_download("pop18.csv", type = "csv", overwrite = TRUE)
 pop18 = read.csv("pop18.csv")
 
-drive_download("pop16.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop16.csv", type = "csv", overwrite = TRUE)
 pop16 = read.csv("pop16.csv")
 
-drive_download("pop14.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop14.csv", type = "csv", overwrite = TRUE)
 pop14 = read.csv("pop14.csv")
 
-drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
+#drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
 no_acc_18 = read.csv("no_acc_18.csv")
 
-drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
+#drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
 no_acc_16 = read.csv("no_acc_16.csv")
 
-drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
+#drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
 no_acc_14 = read.csv("no_acc_14.csv")
 
 #1.1) Merge different years, remove non Sub-Saharan countries and other misc provinces
@@ -1270,55 +1274,26 @@ merged_diff <- na.omit(merged_diff)
 varnames<-c("GID_0", "elrate_diff", "elrate18", "elrate16","elrate14")
 setnames(merged_diff,names(merged_diff),varnames )
 
-merger_rural_mwi$GID_0 = "MWI"
-merger_rural_nga$GID_0 = "NGA"
-merger_rural_uga$GID_0 = "UGA"
 
-merger_rural_mwi = merger_rural_mwi %>%
-  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
-  dplyr::group_by(GID_0, tier) %>%
-  dplyr::summarise(value=n())
-
-merger_rural_mwi$value = merger_rural_mwi$value/sum(merger_rural_mwi$value)
-
-merger_rural_nga = merger_rural_nga %>%
-  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
-  dplyr::group_by(GID_0, tier) %>%
-  dplyr::summarise(value=n())
-
-merger_rural_nga$value = merger_rural_nga$value/sum(merger_rural_nga$value)
-
-
-merger_rural_uga = merger_rural_uga %>%
-  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
-  dplyr::group_by(GID_0, tier) %>%
-  dplyr::summarise(value=n())
-
-merger_rural_uga$value = merger_rural_uga$value/sum(merger_rural_uga$value)
-
-all_real_rural = rbind(merger_rural_mwi, merger_rural_nga, merger_rural_uga)
-all_real_rural$type = "Surveyed"
-all_real_rural$tier = as.factor(all_real_rural$tier)
-
-drive_download("pop18_tier_1_rural.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18_tier_1_rural.csv", type = "csv", overwrite = TRUE)
 pop18_tier_1_rural = read.csv("pop18_tier_1_rural.csv")
 pop18_tier_1_rural = data.frame(pop18_tier_1_rural$sum, pop18_tier_1_rural$GID_1)
 varnames<-c("pop_tier_1_rural", "GID_1")
 setnames(pop18_tier_1_rural,names(pop18_tier_1_rural),varnames )
 
-drive_download("pop18_tier_2_rural.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18_tier_2_rural.csv", type = "csv", overwrite = TRUE)
 pop18_tier_2_rural = read.csv("pop18_tier_2_rural.csv")
 pop18_tier_2_rural = data.frame(pop18_tier_2_rural$sum, pop18_tier_2_rural$GID_1)
 varnames<-c("pop_tier_2_rural", "GID_1")
 setnames(pop18_tier_2_rural,names(pop18_tier_2_rural),varnames )
 
-drive_download("pop18_tier_3_rural.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18_tier_3_rural.csv", type = "csv", overwrite = TRUE)
 pop18_tier_3_rural = read.csv("pop18_tier_3_rural.csv")
 pop18_tier_3_rural = data.frame(pop18_tier_3_rural$sum, pop18_tier_3_rural$GID_1)
 varnames<-c("pop_tier_3_rural", "GID_1")
 setnames(pop18_tier_3_rural,names(pop18_tier_3_rural),varnames )
 
-drive_download("pop18_tier_4_rural.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18_tier_4_rural.csv", type = "csv", overwrite = TRUE)
 pop18_tier_4_rural = read.csv("pop18_tier_4_rural.csv")
 pop18_tier_4_rural = data.frame(pop18_tier_4_rural$sum, pop18_tier_4_rural$GID_1)
 varnames<-c("pop_tier_4_rural", "GID_1")
@@ -1333,6 +1308,7 @@ elrates18 = dplyr::filter(elrates18,  !is.na(GID_0))
 #6) calculate gini index of consumption among those with access within each province
 colist=unique(elrates18$GID_0)
 output_d_18=list()
+
 for (A in colist){
   datin=subset(elrates18, elrates18$GID_0== A)
   
@@ -1340,8 +1316,9 @@ for (A in colist){
   datin$share_tier_2_rural=datin$pop_tier_2_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
   datin$share_tier_3_rural=datin$pop_tier_3_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
   datin$share_tier_4_rural=datin$pop_tier_4_rural/(datin$pop_tier_1_rural+datin$pop_tier_2_rural+datin$pop_tier_3_rural+datin$pop_tier_4_rural)
-
+  
   datin=data.frame(datin$GID_0, datin$GID_1, datin$share_tier_1_rural,datin$share_tier_2_rural,datin$share_tier_3_rural,datin$share_tier_4_rural)
+  
   #reshape by making rows columns and by naming such columns after GID_1 of that row
   datin = reshape(datin, direction="long", idvar=c("datin.GID_1", "datin.GID_0"), varying = c("datin.share_tier_1_rural", "datin.share_tier_2_rural", "datin.share_tier_3_rural", "datin.share_tier_4_rural"))
   datin2 = reshape(datin, direction="wide", idvar=c("time"), timevar = c("datin.GID_1"))
@@ -1385,19 +1362,49 @@ functi2_18= function(x){
 
 national_inequality_18 = lapply(c(1:43), functi2_18)
 
-
-##Column plot split of consumption (RURAL)
+##Column plot split of consumption (rural)
 data_cons = data.frame(elrates18$GID_0, elrates18$GID_1, elrates18$pop_tier_1_rural, elrates18$pop_tier_2_rural,elrates18$pop_tier_3_rural,elrates18$pop_tier_4_rural)
 varnames<-c("GID_0", "GID_1", "t1_18", "t2_18", "t3_18", "t4_18")
 setnames(data_cons,names(data_cons),varnames )
 
 dfm <- gather(data_cons, key=tier, value=value, 't1_18','t2_18','t3_18', 't4_18')
 
+
 dfm_sum = dfm %>% 
   dplyr::group_by(GID_0, tier) %>% 
   dplyr::summarise(value = sum(value))
 
 dfm_sum <- na.omit(dfm_sum)
+
+merger_rural_mwi$GID_0 = "MWI"
+merger_rural_nga$GID_0 = "NGA"
+merger_rural_uga$GID_0 = "UGA"
+
+merger_rural_mwi = merger_rural_mwi %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_rural_mwi$value = merger_rural_mwi$value/sum(merger_rural_mwi$value)
+
+merger_rural_nga = merger_rural_nga %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_rural_nga$value = merger_rural_nga$value/sum(merger_rural_nga$value)
+
+
+merger_rural_uga = merger_rural_uga %>%
+  dplyr::mutate(tier = as.numeric(as.character(tier))) %>%  
+  dplyr::group_by(GID_0, tier) %>%
+  dplyr::summarise(value=n())
+
+merger_rural_uga$value = merger_rural_uga$value/sum(merger_rural_uga$value)
+
+all_real_rural = rbind(merger_rural_mwi, merger_rural_nga, merger_rural_uga)
+all_real_rural$type = "Surveyed"
+all_real_rural$tier = as.factor(all_real_rural$tier)
 
 
 dfm_sum = subset(dfm_sum, dfm_sum$GID_0 == "MWI" | dfm_sum$GID_0 == "NGA" | dfm_sum$GID_0 == "UGA")
@@ -1406,13 +1413,13 @@ dfm_sum$type = "Estimated"
 
 
 dfm_sum = data.table(dfm_sum)
-dfm_sum[, share := prop.table(value), by=GID_0]
+dfm_sum[, value := prop.table(value), by=GID_0]
 
 
-library(plyr)
 dfm_sum$tier = mapvalues(dfm_sum$tier, unique(dfm_sum$tier), c("1", "2", "3", "4"))
 
 dfm_sum = as.data.frame(dfm_sum)
+
 
 merger = dplyr::bind_rows(dfm_sum, all_real_rural)
 
@@ -1420,12 +1427,14 @@ merger = dplyr::bind_rows(dfm_sum, all_real_rural)
 
 merger = merger[complete.cases(merger), ]
 
-valid_rural = ggplot(merger, aes(x=as.factor(tier), y=share, group=type, fill=type)) +
+merger_r = merger
+
+valid_rural = ggplot(merger, aes(x=as.factor(tier), y=value, group=type, fill=type)) +
   geom_bar(stat="identity", position = position_dodge(preserve = "single")) +
   theme_classic()+
   facet_grid(rows = vars(GID_0))+
-  scale_fill_discrete(name="Value")+
   scale_y_continuous(labels=percent, limits = c(0,1))+
+  scale_fill_discrete(name="Value")+
   xlab("KWh/day/household")+
   ylab("Share of rural populaiton with access")+
   scale_x_discrete(labels = c("<0.2 ", "<1", "<3.4", ">3.4"))
@@ -1434,22 +1443,22 @@ valid_rural = ggplot(merger, aes(x=as.factor(tier), y=share, group=type, fill=ty
 #Urban
 
 #1) Import data for populaiton and population without access
-drive_download("pop18.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18.csv", type = "csv", overwrite = TRUE)
 pop18 = read.csv("pop18.csv")
 
-drive_download("pop16.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop16.csv", type = "csv", overwrite = TRUE)
 pop16 = read.csv("pop16.csv")
 
-drive_download("pop14.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop14.csv", type = "csv", overwrite = TRUE)
 pop14 = read.csv("pop14.csv")
 
-drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
+#drive_download("no_acc_18.csv", type = "csv", overwrite = TRUE)
 no_acc_18 = read.csv("no_acc_18.csv")
 
-drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
+#drive_download("no_acc_16.csv", type = "csv", overwrite = TRUE)
 no_acc_16 = read.csv("no_acc_16.csv")
 
-drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
+#drive_download("no_acc_14.csv", type = "csv", overwrite = TRUE)
 no_acc_14 = read.csv("no_acc_14.csv")
 
 #1.1) Merge different years, remove non Sub-Saharan countries and other misc provinces
@@ -1496,25 +1505,25 @@ varnames<-c("GID_0", "elrate_diff", "elrate18", "elrate16","elrate14")
 setnames(merged_diff,names(merged_diff),varnames )
 
 
-drive_download("pop18_tier_1_urban.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18_tier_1_urban.csv", type = "csv", overwrite = TRUE)
 pop18_tier_1_urban = read.csv("pop18_tier_1_urban.csv")
 pop18_tier_1_urban = data.frame(pop18_tier_1_urban$sum, pop18_tier_1_urban$GID_1)
 varnames<-c("pop_tier_1_urban", "GID_1")
 setnames(pop18_tier_1_urban,names(pop18_tier_1_urban),varnames )
 
-drive_download("pop18_tier_2_urban.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18_tier_2_urban.csv", type = "csv", overwrite = TRUE)
 pop18_tier_2_urban = read.csv("pop18_tier_2_urban.csv")
 pop18_tier_2_urban = data.frame(pop18_tier_2_urban$sum, pop18_tier_2_urban$GID_1)
 varnames<-c("pop_tier_2_urban", "GID_1")
 setnames(pop18_tier_2_urban,names(pop18_tier_2_urban),varnames )
 
-drive_download("pop18_tier_3_urban.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18_tier_3_urban.csv", type = "csv", overwrite = TRUE)
 pop18_tier_3_urban = read.csv("pop18_tier_3_urban.csv")
 pop18_tier_3_urban = data.frame(pop18_tier_3_urban$sum, pop18_tier_3_urban$GID_1)
 varnames<-c("pop_tier_3_urban", "GID_1")
 setnames(pop18_tier_3_urban,names(pop18_tier_3_urban),varnames )
 
-drive_download("pop18_tier_4_urban.csv", type = "csv", overwrite = TRUE)
+#drive_download("pop18_tier_4_urban.csv", type = "csv", overwrite = TRUE)
 pop18_tier_4_urban = read.csv("pop18_tier_4_urban.csv")
 pop18_tier_4_urban = data.frame(pop18_tier_4_urban$sum, pop18_tier_4_urban$GID_1)
 varnames<-c("pop_tier_4_urban", "GID_1")
@@ -1648,6 +1657,8 @@ merger = dplyr::bind_rows(dfm_sum, all_real_urban)
 
 merger = merger[complete.cases(merger), ]
 
+merger_u = merger
+
 valid_urban = ggplot(merger, aes(x=as.factor(tier), y=value, group=type, fill=type)) +
   geom_bar(stat="identity", position = position_dodge(preserve = "single")) +
   theme_classic()+
@@ -1662,6 +1673,14 @@ pgrid = plot_grid(valid_urban + theme(legend.position="none"), valid_rural + the
 legend <- get_legend(valid_urban)
 p <- plot_grid(pgrid, legend, ncol = 2, rel_widths = c(0.4, .1))
 ggsave("Valid_cons.png", p, device = "png", width = 39, height = 17, units = "cm", scale=0.5)
+
+prova = rbind(merge((head(merger_u,12)), (tail(merger_u, 11)), by=c("GID_0", "tier"), all=TRUE), merge((head(merger_r,12)), (tail(merger_u, 11)), by=c("GID_0", "tier"), all=TRUE))
+
+formula = "value.x  ~ value.y"
+model = lm(formula, data = prova)
+summary(model)
+
+
 
 ###
 #Hotspots identification
