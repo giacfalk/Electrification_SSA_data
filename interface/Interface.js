@@ -1,5 +1,4 @@
-// Interactive exploration of population and elevation.
-// Allows filtering based on constraints and a popup info window.
+// Interactive exploration of the electrification dataset
 
 // Set up the overall structure of the app, with a control panel to the left
 // of a full-screen map.
