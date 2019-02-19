@@ -39,7 +39,7 @@ var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop18_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop18_noaccess = pop18.mask(pop18.gt(25).and(nl18.lt(0.01))).clip(Countries)
 
 
 var nl18 =  imageCollection.filterDate('2017-01-01', '2018-01-01').select('avg_rad')
@@ -57,7 +57,7 @@ var pop17 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop17_noaccess = pop17.mask(pop17.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop17_noaccess = pop17.mask(pop17.gt(25).and(nl18.lt(0.01))).clip(Countries)
 
 var nl18 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
 var replacement = ee.Image(0);
@@ -74,7 +74,7 @@ var pop16 = ee.Image('users/giacomofalchetta/LandScanGlobal2016');
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop16_noaccess = pop16.mask(pop16.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop16_noaccess = pop16.mask(pop16.gt(25).and(nl18.lt(0.01))).clip(Countries)
 
 var nl18 =  imageCollection.filterDate('2015-01-01', '2016-01-01').select('avg_rad')
 var replacement = ee.Image(0);
@@ -91,7 +91,7 @@ var pop15 = ee.Image('users/giacomofalchetta/LandScanGlobal2015');
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop15_noaccess = pop18.mask(pop15.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop15_noaccess = pop18.mask(pop15.gt(25).and(nl18.lt(0.01))).clip(Countries)
 
 var nl18 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
 var replacement = ee.Image(0);
@@ -108,7 +108,7 @@ var pop14 = ee.Image('users/giacomofalchetta/landscan2014');
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop14_noaccess = pop14.mask(pop14.gt(25).and(nl18.lt(0.01))).clip(Countries)
 
 // include also province and national level electrification layers
 
@@ -243,40 +243,57 @@ var elrate18 = elrate18.visualize(({bands: ['first'], min:1, max: 4, palette: ['
 
 // Load the WorldPop 2015 UN-adjusted population density estimates.
 // (Note that these are only available for some countries, e.g. not the US.)
-var image02 = pop14_noaccess.gt(50);
-var image04 = pop14_noaccess.gte(100);
-var image06 = pop14_noaccess.gte(250);
-var image08 = pop14_noaccess.gte(500);
-var pop14_noaccess = image02.add(image04).add(image06).add(image08)
-var popVis14 = pop14_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.75}));
+var replacement = ee.Image(4);
+var pop14_noaccess = pop14_noaccess.where(pop14_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop14_noaccess = pop14_noaccess.where(pop14_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop14_noaccess = pop14_noaccess.where(pop14_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop14_noaccess = pop14_noaccess.where(pop14_noaccess.gt(25), replacement)
+var popVis14 = pop14_noaccess.visualize(({min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
 
-var image02 = pop15_noaccess.gt(50);
-var image04 = pop15_noaccess.gte(100);
-var image06 = pop15_noaccess.gte(250);
-var image08 = pop15_noaccess.gte(500);
-var pop15_noaccess = image02.add(image04).add(image06).add(image08)
-var popVis15 = pop15_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.75}));
+var replacement = ee.Image(4);
+var pop15_noaccess = pop15_noaccess.where(pop15_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop15_noaccess = pop15_noaccess.where(pop15_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop15_noaccess = pop15_noaccess.where(pop15_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop15_noaccess = pop15_noaccess.where(pop15_noaccess.gt(25), replacement)
 
-var image02 = pop16_noaccess.gt(50);
-var image04 = pop16_noaccess.gte(100);
-var image06 = pop16_noaccess.gte(250);
-var image08 = pop16_noaccess.gte(500);
-var pop16_noaccess = image02.add(image04).add(image06).add(image08)
-var popVis16 = pop16_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.75}));
+var popVis15 = pop15_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
 
-var image02 = pop17_noaccess.gt(50);
-var image04 = pop17_noaccess.gte(100);
-var image06 = pop17_noaccess.gte(250);
-var image08 = pop17_noaccess.gte(500);
-var pop17_noaccess = image02.add(image04).add(image06).add(image08)
-var popVis17 = pop17_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.75}));
+var replacement = ee.Image(4);
+var pop16_noaccess = pop16_noaccess.where(pop16_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop16_noaccess = pop16_noaccess.where(pop16_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop16_noaccess = pop16_noaccess.where(pop16_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop16_noaccess = pop16_noaccess.where(pop16_noaccess.gt(25), replacement)
 
-var image02 = pop18_noaccess.gt(50);
-var image04 = pop18_noaccess.gte(100);
-var image06 = pop18_noaccess.gte(250);
-var image08 = pop18_noaccess.gte(500);
-var pop18_noaccess = image02.add(image04).add(image06).add(image08)
-var popVis18 = pop18_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.75}));
+var popVis16 = pop16_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
+
+var replacement = ee.Image(4);
+var pop17_noaccess = pop17_noaccess.where(pop17_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop17_noaccess = pop17_noaccess.where(pop17_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop17_noaccess = pop17_noaccess.where(pop17_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop17_noaccess = pop17_noaccess.where(pop17_noaccess.gt(25), replacement)
+var popVis17 = pop17_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
+
+var replacement = ee.Image(4);
+var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(25), replacement)
+var popVis18 = pop18_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
 
 
 var modis17 = ee.Image("MODIS/006/MCD12Q1/2017_01_01")
@@ -549,7 +566,7 @@ var makeRow = function(color, name) {
 var palettepop =['FFCDB2', 'E5989B', 'B5838D', '6D6875'];
  
 // name of the legend
-var namespop = ['>50', '>100', '>250', '>500'];
+var namespop = ['>25', '>50', '>100', '>250'];
  
 // Add color and and names
 for (var i = 0; i < 4; i++) {
