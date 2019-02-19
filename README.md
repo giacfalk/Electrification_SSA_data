@@ -2,22 +2,18 @@
 
 This repository hosts:
 
- - A JavaScript file to be imported into Google Earth Engine (step 1)
- - A R script to be run after having run the JavaScript file in Earth Engine (step 2)
+ - A JavaScript file to import into Google Earth Engine (step 1)
+ - A R script to be run after execution of the JavaScript file in Earth Engine (step 2)
  - Supporting files to run the analysis (e.g. a shapefile of provinces)
- - Two ncdf4 files containg the data output of the analyis
-      - One reporting the number of people without access in each grid cell between 2014 and 2018
-      - The other reporting the consumption tier in each populated, electrified cell in 2018
-      
- In order to replicate the analysis, the following steps are required:
+
+To replicate the analysis, the following steps should be followed:
  
-- Create a Google account, if you do not have one, and make a request for Earth Engine access via https://signup.earthengine.google.com.
-- Make sure your Google Drive has enough free cloud storage space.
+- Create a Google account, if you do not have one, and require access to Earth Engine https://signup.earthengine.google.com.
+- Make sure your Google Drive has enough cloud storage space available.
 - Either obtain access to the LandScan population data by applying for an account (https://landscan.ornl.gov/user/apply), or use the WorldPop data, which is accessible from the script in this repository without further steps.
-- Download the JavaScipt and R scripts and the supporitng files hosted at https://github.com/giacfalk/Electrification_SSA_data
+- Download the JavaScipt and R scripts and the supporitng files
 - Run the JavaScript file in Google Earth Engine
-- Download the supporting files along with the R script
-- Run the R script, which reproduce the analysis, plots contained in the paper, and the output ncdf4 files.
+- Run the R script, which reproduces the analysis, the validation, the plots contained in the paper, and the output ncdf4 files.
 
 Source code-related issues should be opened directly on GitHub. Broader questions of the methods should be addressed to giacomo.falchetta@feem.it
 
