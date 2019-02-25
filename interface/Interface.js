@@ -1,28 +1,12 @@
-// Interactive exploration of the electrification dataset
+//Earth Engine Script for replicating
+//the interactive interface of the electrification dataset from
+//A Gridded Dataset to Assess Electrification in Sub-Saharan Africa
+//Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
+// Version: 25/02/18
 
-// Set up the overall structure of the app, with a control panel to the left
-// of a full-screen map.
-ui.root.clear();
-var panel = ui.Panel({style: {width: '250px'}});
-var map = ui.Map();
-ui.root.add(panel).add(map);
-map.setCenter(27, 3, 5);
-
-// Define some constants.
-var POPULATION = 'Population without access';
-var TIERS = 'Tier';
-var GREATER_THAN = 'Greater than';
-var LESS_THAN = 'Less than';
-var quattordici = '2014'
-var quindici = '2015'
-var sedici = '2016'
-var diciassette = '2017'
-var diciotto = '2018'
-var ELRATES = 'Electrification rates'
-
-// Create an empty list of filter constraints.
 var constraints = [];
 
+// Recreate the relevant data
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
 var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
 var replacement = ee.Image(0);
@@ -240,7 +224,6 @@ var image08 = elrate18.gte(0.75);
 var elrate18 = image02.add(image04).add(image06).add(image08)
 var elrate18 = elrate18.visualize(({bands: ['first'], min:1, max: 4, palette: ['05668D', '00A896', '02C39A', 'F0F3BD'], opacity: 0.8}));
 
-
 // Load the WorldPop 2015 UN-adjusted population density estimates.
 // (Note that these are only available for some countries, e.g. not the US.)
 var replacement = ee.Image(4);
@@ -294,7 +277,6 @@ var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(50), replacement)
 var replacement = ee.Image(1)
 var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(25), replacement)
 var popVis18 = pop18_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
-
 
 var modis17 = ee.Image("MODIS/006/MCD12Q1/2017_01_01")
 var modis17 = modis17.select('LC_Type2')
@@ -442,20 +424,282 @@ var tiers = ee.ImageCollection([tiers_joint_rural, tiers_joint_urban]).mosaic()
 
 var tiersVis = tiers.visualize({min: 1, max: 4, palette: ['29088A', '088A29', 'FFFF00', 'FF8000'], opacity: 0.65});
 
-// Create a layer selector that dictates which layer is visible on the map.
-var select = ui.Select({
-  items: [POPULATION, TIERS, ELRATES],
-  value: POPULATION,
-  onChange: redraw,
-});
-panel.add(ui.Label('Select variable:')).add(select);
 
-var select2 = ui.Select({
-  items: [quattordici, quindici, sedici, diciassette, diciotto],
-  value: diciotto,
-  onChange: redraw,
+
+
+
+
+//###############################
+//###############################
+//###############################
+var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop18_noaccess = pop18.mask(pop18.gt(25).and(nl18.lt(0.01))).clip(Countries)
+
+
+var nl18 =  imageCollection.filterDate('2017-01-01', '2018-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop17 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop17_noaccess = pop17.mask(pop17.gt(25).and(nl18.lt(0.01))).clip(Countries)
+
+var nl18 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop16 = ee.Image('users/giacomofalchetta/LandScanGlobal2016');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop16_noaccess = pop16.mask(pop16.gt(25).and(nl18.lt(0.01))).clip(Countries)
+
+var nl18 =  imageCollection.filterDate('2015-01-01', '2016-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop15 = ee.Image('users/giacomofalchetta/LandScanGlobal2015');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop15_noaccess = pop18.mask(pop15.gt(25).and(nl18.lt(0.01))).clip(Countries)
+
+var nl18 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl18.map(conditional);
+
+var nl18 = ee.ImageCollection(output).median()
+
+var pop14 = ee.Image('users/giacomofalchetta/landscan2014');
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop14_noaccess = pop14.mask(pop14.gt(25).and(nl18.lt(0.01))).clip(Countries)
+
+// Load the WorldPop 2015 UN-adjusted population density estimates.
+// (Note that these are only available for some countries, e.g. not the US.)
+var replacement = ee.Image(4);
+var pop14_noaccess = pop14_noaccess.where(pop14_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop14_noaccess = pop14_noaccess.where(pop14_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop14_noaccess = pop14_noaccess.where(pop14_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop14_noaccess = pop14_noaccess.where(pop14_noaccess.gt(25), replacement)
+var popVis14 = pop14_noaccess.visualize(({min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
+
+var replacement = ee.Image(4);
+var pop15_noaccess = pop15_noaccess.where(pop15_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop15_noaccess = pop15_noaccess.where(pop15_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop15_noaccess = pop15_noaccess.where(pop15_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop15_noaccess = pop15_noaccess.where(pop15_noaccess.gt(25), replacement)
+
+var popVis15 = pop15_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
+
+var replacement = ee.Image(4);
+var pop16_noaccess = pop16_noaccess.where(pop16_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop16_noaccess = pop16_noaccess.where(pop16_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop16_noaccess = pop16_noaccess.where(pop16_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop16_noaccess = pop16_noaccess.where(pop16_noaccess.gt(25), replacement)
+
+var popVis16 = pop16_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
+
+var replacement = ee.Image(4);
+var pop17_noaccess = pop17_noaccess.where(pop17_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop17_noaccess = pop17_noaccess.where(pop17_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop17_noaccess = pop17_noaccess.where(pop17_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop17_noaccess = pop17_noaccess.where(pop17_noaccess.gt(25), replacement)
+var popVis17 = pop17_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
+
+var replacement = ee.Image(4);
+var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(250), replacement)
+var replacement = ee.Image(3);
+var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(100), replacement)
+var replacement = ee.Image(2);
+var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(50), replacement)
+var replacement = ee.Image(1)
+var pop18_noaccess = pop18_noaccess.where(pop18_noaccess.gt(25), replacement)
+var popVis18 = pop18_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette: ['FFCDB2', 'E5989B', 'B5838D', '6D6875'], opacity: 0.8}));
+
+
+///
+
+var images_pop = {
+  '2018': popVis18,
+  '2017': popVis17,
+  '2016': popVis16,
+  '2015': popVis15,
+  '2014': popVis14,
+};
+
+var images = images_pop;
+
+var images_tier = {
+  '2018': tiersVis,
+  '2017': tiersVis,
+  '2016': tiersVis,
+  '2015': tiersVis,
+  '2014': tiersVis,
+};
+
+var images_elrates = {
+  '2018': elrate18,
+  '2017': elrate17,
+  '2016': elrate16,
+  '2015': elrate15,
+  '2014': elrate14,
+};
+
+var leftMap = ui.Map();
+leftMap.setControlVisibility(false);
+var leftSelector = addLayerSelector(images, leftMap, 0, 'top-left');
+
+
+// Create the right map, and have it display layer 1.
+var rightMap = ui.Map();
+rightMap.setControlVisibility(false);
+var rightSelector = addLayerSelector(images, rightMap, 1, 'top-right');
+
+var mapUpdate = function(){
+ 
+  var value = select_layer.getValue()
+  if (value == POPULATION)
+    var images = images_pop
+    
+  else 
+    if (value == TIERS)
+    
+      var images = images_tier
+      else if (value == ELRATES)
+     // print(value)
+      var images = images_elrates
+   var rightSelector = addLayerSelector(images, rightMap, 1, 'top-right');
+   var leftSelector = addLayerSelector(images, leftMap, 0, 'top-left');
+}
+// Adds a layer selection widget to the given map, to allow users to change
+// which image is displayed in the associated map.
+function addLayerSelector(images, mapToChange, defaultValue, position) {
+  var label = ui.Label('Choose a year to visualise');
+
+  // This function changes the given map to show the selected image.
+  function updateMap(selection) {
+    mapToChange.layers().set(0, ui.Map.Layer(images[selection]));
+  }
+
+  // Configure a selection dropdown to allow the user to choose between images,
+  // and set the map to update when a user makes a selection.
+  var select = ui.Select({items: Object.keys(images), onChange: updateMap});
+  select.setValue(Object.keys(images)[defaultValue], true);
+
+  var controlPanel =
+      ui.Panel({widgets: [label, select], style: {position: position}});
+
+  mapToChange.add(controlPanel);
+}
+
+
+/*
+ * Tie everything together
+ */
+
+// Create a SplitPanel to hold the adjacent, linked maps.
+var splitPanel = ui.SplitPanel({
+  firstPanel: leftMap,
+  secondPanel: rightMap,
+  wipe: true,
+  style: {stretch: 'both'}
 });
-panel.add(ui.Label('Year:')).add(select2);
+
+// Set the SplitPanel as the only thing in the UI root.
+ui.root.widgets().reset([splitPanel]);
+var linker = ui.Map.Linker([leftMap, rightMap]);
+leftMap.setCenter(27, 3, 5);
+
+ 
+var panel = ui.Panel({style: {width: '250px'}});
+var map = ui.Map();
+ui.root.add(panel)//.add(map);
+//map.setCenter(27, 3, 5);
+
+// Define some constants.
+var POPULATION = 'Population without access';
+var TIERS = 'Tier';
+var GREATER_THAN = 'Greater than';
+var LESS_THAN = 'Less than';
+var quattordici = '2014'
+var quindici = '2015'
+var sedici = '2016'
+var diciassette = '2017'
+var diciotto = '2018'
+var ELRATES = 'Electrification rates'
+
+// Create an empty list of filter constraints.
+var constraints = [];
+
+// Create a layer selector that dictates which layer is visible on the map.
+var select_layer = ui.Select({
+  items: [POPULATION, ELRATES, TIERS],
+  value: POPULATION,
+  onChange: mapUpdate//,
+  //items: Object.keys(images)
+});
+
+// Configure a selection dropdown to allow the user to choose between images,
+  // and set the map to update when a user makes a selection.
+
+panel.add(ui.Label('Select variable:')).add(select_layer);
 
 var legendtiers = ui.Panel({
   style: {
@@ -463,10 +707,12 @@ var legendtiers = ui.Panel({
     padding: '8px 15px'
   }
 });
+
+
  
 // Create legend title
 var legendTitletiers = ui.Label({
-  value: 'Tiers legend',
+  value: 'Consumption tier',
   style: {
     fontWeight: 'bold',
     fontSize: '18px',
@@ -524,7 +770,7 @@ for (var i = 0; i < 4; i++) {
  
 // Create legend title
 var legendTitlepop = ui.Label({
-  value: 'Pop. legend',
+  value: 'Pop. without access',
   style: {
     fontWeight: 'bold',
     fontSize: '18px',
@@ -583,7 +829,7 @@ for (var i = 0; i < 4; i++) {
  
 // Create legend title
 var legendTitleelrates = ui.Label({
-  value: 'El. rates legend',
+  value: 'Electr. rate',
   style: {
     fontWeight: 'bold',
     fontSize: '18px',
@@ -632,80 +878,13 @@ for (var i = 0; i < 4; i++) {
   legendelrates.add(makeRow(paletteelrates[i], nameselrates[i]));
   } 
 
-  
-// Create a function to render a map layer configured by the user inputs.
-function redraw() {
-  map.remove(legendtiers)
-  map.remove(legendpop)
-  map.remove(legendelrates)
-  map.layers().reset();
-  var layer = select.getValue();
-  var layer2 = select2.getValue();
-  var image;
-  if (layer == TIERS & layer2 == diciotto) {
-    image = tiersVis;
-  } else if (layer == POPULATION & layer2 == quattordici) {
-    image = popVis14;
-  } else if (layer == POPULATION & layer2 == quindici) {
-    image = popVis15;
-  } else if (layer == POPULATION & layer2 == sedici) {
-    image = popVis16;
-  } else if (layer == POPULATION & layer2 == diciassette) {
-    image = popVis17;
-  } else if (layer == POPULATION & layer2 == diciotto) {
-    image = popVis18;
-  } else if (layer == ELRATES & layer2 == diciotto) {
-    image = elrate18;
-  } else if (layer == ELRATES & layer2 == diciassette) {
-    image = elrate17;
-  } else if (layer == ELRATES & layer2 == sedici) {
-    image = elrate16;
-  } else if (layer == ELRATES & layer2 == quindici) {
-    image = elrate15;
-  } else if (layer == ELRATES & layer2 == quattordici) {
-    image = elrate14;
-  }
-  
-  for (var i = 0; i < constraints.length; ++i) {
-    var constraint = constraints[i];
-    var mode = constraint.mode.getValue();
-    var value = parseFloat(constraint.value.getValue());
-    if (mode == GREATER_THAN) {
-      image = image.updateMask(constraint.image.gt(value));
-    } else {
-      image = image.updateMask(constraint.image.lt(value));
-    }
-  }
-  map.addLayer(image, {}, layer)
-  
-  var layer = select.getValue();
-  var layer2 = select2.getValue();
-  var legend;
-  if (layer == TIERS & layer2 == diciotto) {
-    legend = legendtiers;
-  } else if (layer == POPULATION & layer2 == quattordici) {
-    legend = legendpop;
-  } else if (layer == POPULATION & layer2 == quindici) {
-    legend = legendpop;
-  } else if (layer == POPULATION & layer2 == sedici) {
-    legend = legendpop;
-  } else if (layer == POPULATION & layer2 == diciassette) {
-    legend = legendpop;
-  } else if (layer == POPULATION & layer2 == diciotto) {
-    legend = legendpop;
-  } else if (layer == ELRATES & layer2 == diciotto) {
-    legend = legendelrates;
-  } else if (layer == ELRATES & layer2 == diciassette) {
-    legend = legendelrates;
-  } else if (layer == ELRATES & layer2 == sedici) {
-    legend = legendelrates;
-  } else if (layer == ELRATES & layer2 == quindici) {
-    legend = legendelrates;
-  } else if (layer == ELRATES & layer2 == quattordici) {
-    legend = legendelrates;
-  }
-  map.add(legend);
-}
 
-// Invoke the redraw function once at start up to initialize the map.
-redraw();
+panel.add(legendpop)
+panel.add(legendelrates)
+panel.add(legendtiers)
+
+var prova = ui.Label('NB: tiers are only available for 2018.')
+var prova2 = ui.Label({value: 'Source code and underlying data:', targetUrl:'https://github.com/giacfalk/Electrification_SSA_data'})
+
+panel.add(prova)
+panel.add(prova2)
