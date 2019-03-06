@@ -2,7 +2,7 @@
 //the interactive interface of the electrification dataset from
 //A Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 //Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-// Version: 25/02/18
+// Version: 06/03/19
 
 var constraints = [];
 
@@ -98,96 +98,12 @@ var pop14_noaccess = pop14.mask(pop14.gt(25).and(nl18.lt(0.01))).clip(Countries)
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1')
 
-var no_acc_14 = pop14_noaccess.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['noacc']),
-    collection: Countries,
-})
+var elrate14 = ee.Image('users/giacomofalchetta/elrate14')
+var elrate15 = ee.Image('users/giacomofalchetta/elrate15')
+var elrate16 = ee.Image('users/giacomofalchetta/elrate16')
+var elrate17 = ee.Image('users/giacomofalchetta/elrate17')
+var elrate18 = ee.Image('users/giacomofalchetta/elrate18')
 
-var no_acc_15 = pop15_noaccess.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['noacc']),
-    collection: Countries,
-})
-
-var no_acc_16 = pop16_noaccess.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['noacc']),
-    collection: Countries,
-})
-
-var no_acc_17 = pop17_noaccess.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['noacc']),
-    collection: Countries,
-})
-
-var no_acc_18 = pop18_noaccess.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['noacc']),
-    collection: Countries,
-})
-
-var no_acc_14 = pop14.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['pop']),
-    collection: no_acc_14,
-})
-
-var no_acc_15 = pop15.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['pop']),
-    collection: no_acc_15,
-})
-
-var no_acc_16 = pop16.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['pop']),
-    collection: no_acc_16,
-})
-
-var no_acc_17 = pop17.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['pop']),
-    collection: no_acc_17,
-})
-
-var no_acc_18 = pop18.reduceRegions({
-    reducer: ee.Reducer.sum().setOutputs(['pop']),
-    collection: no_acc_18,
-})
-
-
-function computeelrate(feature) {
-  var uno = ee.Number(1)
-  var na = ee.Number(feature.get('noacc'));
-  var pop = ee.Number(feature.get('pop'));
-
-  return feature.set({ elrate: uno.subtract(na.divide(pop)) });
-}
-
-// generate a new property for all features
-var elrate18 = no_acc_18.map(computeelrate);
-var elrate17 = no_acc_17.map(computeelrate);
-var elrate16 = no_acc_16.map(computeelrate);
-var elrate15 = no_acc_15.map(computeelrate);
-var elrate14 = no_acc_14.map(computeelrate);
-
-var elrate18 = elrate18.reduceToImage({
-    properties: ['elrate'],
-    reducer: ee.Reducer.first()
-});
-
-var elrate17 = elrate17.reduceToImage({
-    properties: ['elrate'],
-    reducer: ee.Reducer.first()
-});
-
-var elrate16 = elrate16.reduceToImage({
-    properties: ['elrate'],
-    reducer: ee.Reducer.first()
-});
-
-var elrate15 = elrate15.reduceToImage({
-    properties: ['elrate'],
-    reducer: ee.Reducer.first()
-});
-
-var elrate14 = elrate14.reduceToImage({
-    properties: ['elrate'],
-    reducer: ee.Reducer.first()
-});
 
 var image02 = elrate14.gte(0);
 var image04 = elrate14.gte(0.25);
@@ -610,7 +526,7 @@ var leftSelector = addLayerSelector(images, leftMap, 0, 'top-left');
 // Create the right map, and have it display layer 1.
 var rightMap = ui.Map();
 rightMap.setControlVisibility(false);
-var rightSelector = addLayerSelector(images, rightMap, 1, 'top-right');
+var rightSelector = addLayerSelector(images, rightMap, 4, 'top-right');
 
 var mapUpdate = function(){
  
@@ -884,7 +800,13 @@ panel.add(legendelrates)
 panel.add(legendtiers)
 
 var prova = ui.Label('NB: tiers are only available for 2018.')
-var prova2 = ui.Label({value: 'Source code and underlying data:', targetUrl:'https://github.com/giacfalk/Electrification_SSA_data'})
+var space = ui.Label('___________')
+var prova2 = ui.Label({value: 'Source code and underlying data', targetUrl:'https://github.com/giacfalk/Electrification_SSA_data'})
+var prova3 = ui.Label('Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers')
+var feem = ui.Label({value: 'Powered by FEEM', targetUrl:'http://www.feem.it'})
 
 panel.add(prova)
+panel.add(space)
+panel.add(feem)
+panel.add(prova3)
 panel.add(prova2)
