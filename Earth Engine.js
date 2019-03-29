@@ -1394,28 +1394,28 @@ var modis17 = ee.Image("MODIS/006/MCD12Q1/2017_01_01")
 var modis17 = modis17.select('LC_Type2')
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'BWA'),  ee.Filter.eq('ISO3', 'GAB'), ee.Filter.eq('ISO3', 'AGO')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var rurpop0 = pop18_cl.mask(pop18_cl.lte(175).and(pop18_cl.gt(0)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop0 = pop18.mask(pop18.lte(175).and(pop18.gt(0)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'NAM'), ee.Filter.eq('ISO3', 'ZMB'), ee.Filter.eq('ISO3', 'MRT'), ee.Filter.eq('ISO3', 'ZWE'), ee.Filter.eq('ISO3', 'MOZ'), ee.Filter.eq('ISO3', 'SOM'), ee.Filter.eq('ISO3', 'ZAF'), ee.Filter.eq('ISO3', 'CPV'), ee.Filter.eq('ISO3', 'SWZ')));
-var pop18_cl = pop17.select('b1').clip(Countries)
-var rurpop1 = pop18_cl.mask(pop18_cl.lte(650).and(pop18_cl.gt(0)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop1 = pop18.mask(pop18.lte(650).and(pop18.gt(0)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'LSO'), ee.Filter.eq('ISO3', 'CMR'), ee.Filter.eq('ISO3', 'MDG'), ee.Filter.eq('ISO3', 'CAF'), ee.Filter.eq('ISO3', 'MLI'),ee.Filter.eq('ISO3', 'TZA')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var rurpop2 = pop18_cl.mask(pop18_cl.lte(800).and(pop18_cl.gt(0)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop2 = pop18.mask(pop18.lte(800).and(pop18.gt(0)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN'), ee.Filter.eq('ISO3', 'GNQ')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var rurpop3 = pop18_cl.mask(pop18_cl.lte(1200).and(pop18_cl.gt(0)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop3 = pop18.mask(pop18.lte(1200).and(pop18.gt(0)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN'),  ee.Filter.eq('ISO3', 'ERI')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var rurpop4 = pop18_cl.mask(pop18_cl.lte(1500).and(pop18_cl.gt(0)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop4 = pop18.mask(pop18.lte(1500).and(pop18.gt(0)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'KEN'), ee.Filter.eq('ISO3', 'MWI'), ee.Filter.eq('ISO3', 'COD'), ee.Filter.eq('ISO3', 'TGO'), ee.Filter.eq('ISO3', 'NGA'), ee.Filter.eq('ISO3', 'TCD'), ee.Filter.eq('ISO3', 'SEN'), ee.Filter.eq('ISO3', 'NER'), ee.Filter.eq('ISO3', 'COG')));
-var pop18 = pop18.select('b1').clip(Countries)
-var rurpop5 = pop18_cl.mask(pop18_cl.lte(2500).and(pop18_cl.gt(0)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var rurpop5 = pop18.mask(pop18.lte(2500).and(pop18.gt(0)))
 
 //unify rural areas data
 var rurpop = ee.ImageCollection([rurpop0, rurpop1, rurpop2, rurpop3, rurpop4, rurpop5]).mosaic()
@@ -1432,6 +1432,8 @@ var output = nl18.map(conditional);
 
 var nl18 = ee.ImageCollection(output).median()
 
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1');
+
 var lightcapita18 = nl18
 
 var lightcapita18 = lightcapita18.mask(rurpop.gt(0).and(lightcapita18.gt(0)))
@@ -1444,7 +1446,7 @@ var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.68)))
 
 var replacement = ee.Image(1);
     
-var pop18_tier_1 =pop18_tier_2.where(pop18_tier_1.gt(1), replacement);
+var pop18_tier_1 =pop18_tier_1.where(pop18_tier_1.gt(1), replacement);
 
 var replacement = ee.Image(2);
 
@@ -1463,28 +1465,28 @@ var tiers_joint_rural = ee.ImageCollection([pop18_tier_1, pop18_tier_2, pop18_ti
 ///
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'BWA'),  ee.Filter.eq('ISO3', 'GAB'), ee.Filter.eq('ISO3', 'AGO')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var urbpop0 = pop18_cl.mask(modis17.eq(13).or(pop18_cl.gt(175)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop0 = pop18.mask(modis17.eq(13).or(pop18.gt(175)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'NAM'), ee.Filter.eq('ISO3', 'ZMB'), ee.Filter.eq('ISO3', 'MRT'), ee.Filter.eq('ISO3', 'ZWE'), ee.Filter.eq('ISO3', 'MOZ'), ee.Filter.eq('ISO3', 'SOM'), ee.Filter.eq('ISO3', 'ZAF'), ee.Filter.eq('ISO3', 'CPV'), ee.Filter.eq('ISO3', 'SWZ')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var urbpop1 = pop18_cl.mask(modis17.eq(13).or(pop18_cl.gt(650)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop1 = pop18.mask(modis17.eq(13).or(pop18.gt(650)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'LSO'), ee.Filter.eq('ISO3', 'CMR'), ee.Filter.eq('ISO3', 'MDG'), ee.Filter.eq('ISO3', 'CAF'), ee.Filter.eq('ISO3', 'MLI'),ee.Filter.eq('ISO3', 'TZA')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var urbpop2 = pop18_cl.mask(modis17.eq(13).or(pop18_cl.gt(800)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop2 = pop18.mask(modis17.eq(13).or(pop18.gt(800)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'GMB'), ee.Filter.eq('ISO3', 'GNB'), ee.Filter.eq('ISO3', 'LBR'), ee.Filter.eq('ISO3', 'BFA'), ee.Filter.eq('ISO3', 'CIV'), ee.Filter.eq('ISO3', 'SLE'), ee.Filter.eq('ISO3', 'GHA'),  ee.Filter.eq('ISO3', 'GIN'), ee.Filter.eq('ISO3', 'GNQ')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var urbpop3 = pop18_cl.mask(modis17.eq(13).or(pop18_cl.gt(1200)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop3 = pop18.mask(modis17.eq(13).or(pop18.gt(1200)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'ETH'), ee.Filter.eq('ISO3', 'UGA'), ee.Filter.eq('ISO3', 'BDI'), ee.Filter.eq('ISO3', 'RWA'), ee.Filter.eq('ISO3', 'BEN'), ee.Filter.eq('ISO3', 'SDN'), ee.Filter.eq('ISO3', 'ERI')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var urbpop4 = pop18_cl.mask(modis17.eq(13).or(pop18_cl.gt(1500)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop4 = pop18.mask(modis17.eq(13).or(pop18.gt(1500)))
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'KEN'), ee.Filter.eq('ISO3', 'MWI'), ee.Filter.eq('ISO3', 'COD'), ee.Filter.eq('ISO3', 'TGO'), ee.Filter.eq('ISO3', 'NGA'), ee.Filter.eq('ISO3', 'TCD'), ee.Filter.eq('ISO3', 'SEN'), ee.Filter.eq('ISO3', 'NER'), ee.Filter.eq('ISO3', 'COG')));
-var pop18_cl = pop18.select('b1').clip(Countries)
-var urbpop5 = pop18_cl.mask(modis17.eq(13).or(pop18_cl.gt(2500)))
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1').clip(Countries)
+var urbpop5 = pop18.mask(modis17.eq(13).or(pop18.gt(2500)))
 
 //unify urban areas data
 var urbpop = ee.ImageCollection([urbpop0, urbpop1, urbpop2, urbpop3, urbpop4, urbpop5]).mosaic()
@@ -1501,6 +1503,8 @@ var output = nl18.map(conditional);
 
 var nl18 = ee.ImageCollection(output).median()
 
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017').select('b1');
+
 var lightcapita18 = nl18
 
 var lightcapita18 = lightcapita18.mask(urbpop.gt(0).and(lightcapita18.gt(0)))
@@ -1512,7 +1516,7 @@ var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.88)))
 
 var replacement = ee.Image(1);
     
-var pop18_tier_1 =pop18_tier_2.where(pop18_tier_1.gt(1), replacement);
+var pop18_tier_1 =pop18_tier_1.where(pop18_tier_1.gt(1), replacement);
 
 var replacement = ee.Image(2);
 
