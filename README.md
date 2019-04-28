@@ -20,3 +20,6 @@ To replicate the analysis, the following steps should be followed:
 
 Source code-related issues should be opened directly on GitHub. Broader questions of the methods should be addressed to giacomo.falchetta@feem.it
 
+The original dataset is available at: http://dx.doi.org/10.17632/kn4636mtvg.2
+The data descriptor manuscript is available at: 
+
