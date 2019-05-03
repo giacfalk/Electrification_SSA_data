@@ -1,7 +1,7 @@
 //Earth Engine Script for: 
 //A Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 //Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-// Version: 24/02/18
+// Version: 29/04/18
 
 //Import VIIRS nighttime lights provinces shapefile
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
@@ -58,10 +58,6 @@ var conditional = function(image) {
 var output = nl18.map(conditional);
 
 var nl18 = ee.ImageCollection(output).median()
-
-//Visualise data on the map 
-Map.addLayer({eeObject: nl18.clip(Countries), name: 'night lights 2018'})
-Map.addLayer({eeObject: nl14.clip(Countries), name: 'night lights 2014'})
 
 
 // Generate data for population without access for both years
@@ -191,8 +187,6 @@ var urbpop5 = pop18_cut.mask(modis17.eq(13).or(pop18_cut.gt(2500)))
 //unify urban areas data
 var urbpop = ee.ImageCollection([urbpop0, urbpop1, urbpop2, urbpop3, urbpop4, urbpop5]).mosaic()
 
-Map.addLayer({eeObject: urbpop, name: 'urban population'})
-
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('ISO3', 'BWA'),  ee.Filter.eq('ISO3', 'GAB'), ee.Filter.eq('ISO3', 'AGO')));
 var pop18_cut = pop18.select('b1').clip(Countries)
 var rurpop0 = pop18_cut.mask(pop18_cut.lte(175).and(pop18_cut.gt(0)))
@@ -219,8 +213,6 @@ var rurpop5 = pop18_cut.mask(pop18_cut.lte(2500).and(pop18_cut.gt(0)))
 
 //unify rural areas data
 var rurpop = ee.ImageCollection([rurpop0, rurpop1, rurpop2, rurpop3, rurpop4, rurpop5]).mosaic()
-
-Map.addLayer({eeObject: rurpop, name: 'rural population'})
 
 //Validate urbanisation rates estimated at the grid cell level
 
@@ -990,6 +982,7 @@ Export.table.toDrive({
 
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1');
+var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 
 //Calculate total population by province
 var pop18_exp = pop18.reduceRegions({
@@ -1000,7 +993,7 @@ var pop18_exp = pop18.reduceRegions({
 var pop18_exp = pop18_exp.select(['.*'],null,false);
 
 Export.table.toDrive({
-  collection: pop18,
+  collection: pop18_exp,
   description: 'pop18_valid',
   fileFormat: 'CSV'
 });   
@@ -1375,10 +1368,6 @@ var stackCollection = function(collection) {
 
 var stacked = stackCollection(pop_noaccess);
 
-var visParams = {bands: ['b1_4'], min: 0, max: 100, palette: ['00FFFF', '0000FF']}
-
-Map.addLayer({eeObject: stacked, name: 'density of people without access in 2018', visParams: visParams})
-
 Export.image.toDrive({
   image: stacked,
   description: 'pop_noaccess',
@@ -1439,10 +1428,10 @@ var lightcapita18 = nl18
 var lightcapita18 = lightcapita18.mask(rurpop.gt(0).and(lightcapita18.gt(0)))
 
 //Input values defined in R as quartiles 
-var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.38)))
-var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.38)).and(lightcapita18.lt(0.45)))
-var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.45)).and(lightcapita18.lt(0.68)))
-var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.68)))
+var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.39)))
+var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.39)).and(lightcapita18.lt(0.51)))
+var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.51)).and(lightcapita18.lt(0.77)))
+var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.77)))
 
 var replacement = ee.Image(1);
     
@@ -1509,10 +1498,10 @@ var lightcapita18 = nl18
 
 var lightcapita18 = lightcapita18.mask(urbpop.gt(0).and(lightcapita18.gt(0)))
 
-var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.40)))
-var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.40)).and(lightcapita18.lt(0.48)))
-var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.48)).and(lightcapita18.lt(0.88)))
-var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.88)))
+var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.41)))
+var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.41)).and(lightcapita18.lt(0.56)))
+var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.56)).and(lightcapita18.lt(1.05)))
+var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(1.05)))
 
 var replacement = ee.Image(1);
     
@@ -1533,72 +1522,6 @@ var pop18_tier_4 =pop18_tier_4.where(pop18_tier_4.gt(1), replacement);
 var tiers_joint_urban = ee.ImageCollection([pop18_tier_1, pop18_tier_2, pop18_tier_3, pop18_tier_4]).mosaic()
 
 var tiers_joint = ee.ImageCollection([tiers_joint_rural, tiers_joint_urban]).mosaic()
-
-var visParams = {bands: ['b1'], min: 1, max: 4, palette: ['29088A', '088A29', 'FFFF00', 'FF8000']}
-
-Map.addLayer({eeObject: tiers_joint, name: 'tiers of consumption in 2018', visParams: visParams})
-
-// set position of panel
-var legend = ui.Panel({
-  style: {
-    position: 'bottom-left',
-    padding: '8px 15px'
-  }
-});
- 
-// Create legend title
-var legendTitle = ui.Label({
-  value: 'Tiers legend',
-  style: {
-    fontWeight: 'bold',
-    fontSize: '18px',
-    margin: '0 0 4px 0',
-    padding: '0'
-    }
-});
- 
-// Add the title to the panel
-legend.add(legendTitle);
- 
-// Creates and styles 1 row of the legend.
-var makeRow = function(color, name) {
- 
-      // Create the label that is actually the colored box.
-      var colorBox = ui.Label({
-        style: {
-          backgroundColor: '#' + color,
-          // Use padding to give the box height and width.
-          padding: '8px',
-          margin: '0 0 4px 0'
-        }
-      });
- 
-      // Create the label filled with the description text.
-      var description = ui.Label({
-        value: name,
-        style: {margin: '0 0 4px 6px'}
-      });
- 
-      // return the panel
-      return ui.Panel({
-        widgets: [colorBox, description],
-        layout: ui.Panel.Layout.Flow('horizontal')
-      });
-};
- 
-//  Palette with the colors
-var palette =['29088A', '088A29', 'FFFF00', 'FF8000'];
- 
-// name of the legend
-var names = ['1','2','3', '4'];
- 
-// Add color and and names
-for (var i = 0; i < 4; i++) {
-  legend.add(makeRow(palette[i], names[i]));
-  }  
- 
-// add legend to map (alternatively you can also print the legend to the console)
-Map.add(legend);
 
 Export.image.toDrive({
   image: tiers_joint,
