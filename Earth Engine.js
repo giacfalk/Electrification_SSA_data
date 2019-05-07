@@ -1,7 +1,7 @@
 //Earth Engine Script for: 
 //A Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 //Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-// Version: 29/04/18
+// Version: 07/05/19
 
 //Import VIIRS nighttime lights provinces shapefile
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
@@ -1428,10 +1428,10 @@ var lightcapita18 = nl18
 var lightcapita18 = lightcapita18.mask(rurpop.gt(0).and(lightcapita18.gt(0)))
 
 //Input values defined in R as quartiles 
-var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.39)))
-var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.39)).and(lightcapita18.lt(0.51)))
-var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.51)).and(lightcapita18.lt(0.77)))
-var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.77)))
+var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.38)))
+var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.38)).and(lightcapita18.lt(0.45)))
+var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.45)).and(lightcapita18.lt(0.68)))
+var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.68)))
 
 var replacement = ee.Image(1);
     
@@ -1498,10 +1498,10 @@ var lightcapita18 = nl18
 
 var lightcapita18 = lightcapita18.mask(urbpop.gt(0).and(lightcapita18.gt(0)))
 
-var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.41)))
-var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.41)).and(lightcapita18.lt(0.56)))
-var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.56)).and(lightcapita18.lt(1.05)))
-var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(1.05)))
+var pop18_tier_1 = pop18.mask(pop18.gt(0).and(lightcapita18.gt(0)).and(lightcapita18.lt(0.40)))
+var pop18_tier_2 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.40)).and(lightcapita18.lt(0.48)))
+var pop18_tier_3 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.48)).and(lightcapita18.lt(0.88)))
+var pop18_tier_4 = pop18.mask(pop18.gt(0).and(lightcapita18.gte(0.88)))
 
 var replacement = ee.Image(1);
     
@@ -1531,67 +1531,3 @@ Export.image.toDrive({
   fileFormat: 'GeoTIFF',
   crs : 'EPSG:4326'
 });
-
-
-/// Hotspot analysis
-var grid10km = ee.FeatureCollection('users/giacomofalchetta/grid10km')
-
-var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
-var nl14 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
-var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
-
-var replacement = ee.Image(0);
-    
-var conditional = function(image) {
-  return image.where(image.lt(0.35), replacement);
-};
-
-var output = nl18.map(conditional);
-
-var nl18 = ee.ImageCollection(output).median().clip(grid10km)
-
-var replacement = ee.Image(0);
-    
-var conditional = function(image) {
-  return image.where(image.lt(0.25), replacement);
-};
-
-var output = nl14.map(conditional);
-
-var nl14 = ee.ImageCollection(output).median().clip(grid10km)
-
-var popnoaccess14 = pop14.mask(pop14.gt(0).and(nl14.lt(0.05)))
-var popnoaccess18 = pop18.mask(pop18.gt(0).and(nl18.lt(0.05)))
-
-var popnoaccess14 = popnoaccess14.clip(grid10km)
-var popnoaccess18 = popnoaccess18.clip(grid10km)
-
-
-var changeinpopnoaccess = popnoaccess18.subtract(popnoaccess14)
-var changeinpopnoaccess = changeinpopnoaccess.clip(grid10km).toDouble()
-
-var grid10km = changeinpopnoaccess.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: grid10km,
-  scale: 1000,
-});
-
-var grid10km = popnoaccess18.reduceRegions({
-  reducer: ee.Reducer.sum(),
-  collection: grid10km,
-  scale: 1000,
-});
-
-var grid10km = tiers_joint.reduceRegions({
-  reducer: ee.Reducer.mean(),
-  collection: grid10km,
-  scale: 1000,
-});
-
-var grid10km = grid10km.select(['.*'],null,false);
-
-Export.table.toDrive({
-  collection: grid10km,
-  description: 'grid_wdata',
-  fileFormat: 'SHP'
-}); 
