@@ -2,7 +2,7 @@
 //the interactive interface of the electrification dataset from
 //A Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 //Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-// Version: 06/03/19
+// Version: 03/05/19
 
 var constraints = [];
 
@@ -493,6 +493,7 @@ var popVis18 = pop18_noaccess.visualize(({bands: ['b1'], min:1, max: 4, palette:
 ///
 
 var images_pop = {
+  'Select': null,
   '2018': popVis18,
   '2017': popVis17,
   '2016': popVis16,
@@ -503,6 +504,7 @@ var images_pop = {
 var images = images_pop;
 
 var images_tier = {
+  'Select': null,
   '2018': tiersVis,
   '2017': tiersVis,
   '2016': tiersVis,
@@ -511,6 +513,7 @@ var images_tier = {
 };
 
 var images_elrates = {
+  'Select': null,
   '2018': elrate18,
   '2017': elrate17,
   '2016': elrate16,
@@ -519,17 +522,14 @@ var images_elrates = {
 };
 
 var leftMap = ui.Map();
-leftMap.setControlVisibility(false);
-var leftSelector = addLayerSelector(images, leftMap, 0, 'top-left');
+var leftSelector = addLayerSelector(images, leftMap, 5, 'top-left');
 
 
 // Create the right map, and have it display layer 1.
 var rightMap = ui.Map();
-rightMap.setControlVisibility(false);
-var rightSelector = addLayerSelector(images, rightMap, 4, 'top-right');
+var rightSelector = addLayerSelector(images, rightMap, 5, 'top-right');
 
 var mapUpdate = function(){
- 
   var value = select_layer.getValue()
   if (value == POPULATION)
     var images = images_pop
@@ -541,8 +541,8 @@ var mapUpdate = function(){
       else if (value == ELRATES)
      // print(value)
       var images = images_elrates
-   var rightSelector = addLayerSelector(images, rightMap, 1, 'top-right');
-   var leftSelector = addLayerSelector(images, leftMap, 0, 'top-left');
+   var rightSelector = addLayerSelector(images, rightMap, 5, 'top-right');
+   var leftSelector = addLayerSelector(images, leftMap, 5, 'top-left');
 }
 // Adds a layer selection widget to the given map, to allow users to change
 // which image is displayed in the associated map.
@@ -561,7 +561,7 @@ function addLayerSelector(images, mapToChange, defaultValue, position) {
 
   var controlPanel =
       ui.Panel({widgets: [label, select], style: {position: position}});
-
+  mapToChange.clear(controlPanel) 
   mapToChange.add(controlPanel);
 }
 
@@ -802,7 +802,11 @@ panel.add(legendtiers)
 var prova = ui.Label('NB: tiers are only available for 2018.')
 var space = ui.Label('___________')
 var prova2 = ui.Label({value: 'Source code and underlying data', targetUrl:'https://github.com/giacfalk/Electrification_SSA_data'})
+var prova3 = ui.Label('Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers')
+var feem = ui.Label({value: 'Powered by FEEM', targetUrl:'http://www.feem.it'})
 
 panel.add(prova)
 panel.add(space)
+panel.add(feem)
+panel.add(prova3)
 panel.add(prova2)
