@@ -22,5 +22,5 @@ Source code-related issues should be opened directly on GitHub. Broader question
 
 The original dataset is available at: http://dx.doi.org/10.17632/kn4636mtvg
 
-The data descriptor manuscript is available at: xxx
+The data descriptor manuscript, published on Scientific Data, is available at: http://dx.doi.org/10.1038/s41597-019-0122-6
 
