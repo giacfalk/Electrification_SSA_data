@@ -23,5 +23,7 @@ Source code-related issues should be opened directly on GitHub. Broader question
 
 The original dataset is available at: http://dx.doi.org/10.17632/kn4636mtvg
 
-The data descriptor manuscript, published on Scientific Data, is available at: http://dx.doi.org/10.1038/s41597-019-0122-6
+The data descriptor manuscript, published in Scientific Data, is available at: http://dx.doi.org/10.1038/s41597-019-0122-6
+
+The dynamic interface to browse the data is found at: http://gdessa.ene.iiasa.ac.at/ or at https://www.feem.it/gdessa
 
