@@ -1378,67 +1378,67 @@ var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Fi
 var pop18_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.01))).clip(Countries)
 
 
-var nl18 =  imageCollection.filterDate('2017-01-01', '2018-01-01').select('avg_rad')
+var nl17 =  imageCollection.filterDate('2017-01-01', '2018-01-01').select('avg_rad')
 var replacement = ee.Image(0);
     
 var conditional = function(image) {
   return image.where(image.lt(0.35), replacement);
 };
 
-var output = nl18.map(conditional);
+var output = nl17.map(conditional);
 
-var nl18 = ee.ImageCollection(output).median()
+var nl17 = ee.ImageCollection(output).median()
 
-var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+var pop17 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop17_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop17_noaccess = pop17.mask(pop17.gt(0).and(nl17.lt(0.01))).clip(Countries)
 
-var nl18 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
+var nl16 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
 var replacement = ee.Image(0);
     
 var conditional = function(image) {
   return image.where(image.lt(0.25), replacement);
 };
 
-var output = nl18.map(conditional);
+var output = nl16.map(conditional);
 
-var nl18 = ee.ImageCollection(output).median()
+var nl16 = ee.ImageCollection(output).median()
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop16_noaccess = pop16.mask(pop16.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop16_noaccess = pop16.mask(pop16.gt(0).and(nl16.lt(0.01))).clip(Countries)
 
-var nl18 =  imageCollection.filterDate('2015-01-01', '2016-01-01').select('avg_rad')
+var nl15 =  imageCollection.filterDate('2015-01-01', '2016-01-01').select('avg_rad')
 var replacement = ee.Image(0);
     
 var conditional = function(image) {
   return image.where(image.lt(0.25), replacement);
 };
 
-var output = nl18.map(conditional);
+var output = nl15.map(conditional);
 
-var nl18 = ee.ImageCollection(output).median()
+var nl15 = ee.ImageCollection(output).median()
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop15_noaccess = pop15.mask(pop15.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop15_noaccess = pop15.mask(pop15.gt(0).and(nl15.lt(0.01))).clip(Countries)
 
-var nl18 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
+var nl14 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
 var replacement = ee.Image(0);
     
 var conditional = function(image) {
   return image.where(image.lt(0.25), replacement);
 };
 
-var output = nl18.map(conditional);
+var output = nl14.map(conditional);
 
-var nl18 = ee.ImageCollection(output).median()
+var nl14 = ee.ImageCollection(output).median()
 
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
 
-var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl18.lt(0.01))).clip(Countries)
+var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl14.lt(0.01))).clip(Countries)
 
 var pop_noaccess = ee.ImageCollection([pop14_noaccess, pop15_noaccess, pop16_noaccess, pop17_noaccess, pop18_noaccess])
 
