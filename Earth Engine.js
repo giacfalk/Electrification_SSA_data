@@ -1,13 +1,16 @@
 //Earth Engine Script for: 
 //A Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 //Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-// Version: 07/05/19
+// Version: 02/08/19
 
 //Import VIIRS nighttime lights provinces shapefile
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
 var nl14 =  imageCollection.filterDate('2014-01-01', '2015-01-01').select('avg_rad')
+var nl15 =  imageCollection.filterDate('2015-01-01', '2016-01-01').select('avg_rad')
 var nl16 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
+var nl17 =  imageCollection.filterDate('2017-01-01', '2018-01-01').select('avg_rad')
 var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
+var nl19 =  imageCollection.filterDate('2019-01-01', '2020-01-01').select('avg_rad')
 
 //
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1');
@@ -23,6 +26,8 @@ var pop17 = ee.Image('users/giacomofalchetta/LandScanGlobal2017')
 //var pop14 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 //var pop18 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
+var pop19 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+//var pop20 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
 
 // Apply NTL noise floors
 //2014
@@ -33,42 +38,50 @@ var conditional = function(image) {
 };
 
 var output = nl14.map(conditional);
-
 var nl14 = ee.ImageCollection(output).median()
 
+//2015
+var output = nl15.map(conditional);
+var nl15 = ee.ImageCollection(output).median()
+
 //2016
-var replacement = ee.Image(0);
-    
-var conditional = function(image) {
-  return image.where(image.lt(0.25), replacement);
-};
-
 var output = nl16.map(conditional);
-
 var nl16 = ee.ImageCollection(output).median()
 
-
-//2018
+//2017
 var replacement = ee.Image(0);
-    
 var conditional = function(image) {
   return image.where(image.lt(0.35), replacement);
 };
 
-var output = nl18.map(conditional);
+var output = nl17.map(conditional);
+var nl17 = ee.ImageCollection(output).median()
 
+//2018
+var output = nl18.map(conditional);
 var nl18 = ee.ImageCollection(output).median()
 
+//2019
+var output = nl19.map(conditional);
+var nl19 = ee.ImageCollection(output).median()
 
 // Generate data for population without access for both years
 
 var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl14.lt(0.05)))
-var pop16_noaccess = pop14.mask(pop16.gt(0).and(nl16.lt(0.05)))
+var pop15_noaccess = pop15.mask(pop15.gt(0).and(nl15.lt(0.05)))
+var pop16_noaccess = pop16.mask(pop16.gt(0).and(nl16.lt(0.05)))
+var pop17_noaccess = pop17.mask(pop17.gt(0).and(nl17.lt(0.05)))
 var pop18_noaccess = pop18.mask(pop18.gt(0).and(nl18.lt(0.05)))
+var pop19_noaccess = pop19.mask(pop19.gt(0).and(nl19.lt(0.05)))
 
 //Calculate sum of people without access by province
 
 var no_acc_14 = pop14_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+var no_acc_15 = pop14_noaccess.reduceRegions({
     reducer: ee.Reducer.sum(),
     collection: Countries,
 })
@@ -78,10 +91,21 @@ var no_acc_16 = pop16_noaccess.reduceRegions({
     collection: Countries,
 })
 
+var no_acc_17 = pop16_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
 var no_acc_18 = pop18_noaccess.reduceRegions({
     reducer: ee.Reducer.sum(),
     collection: Countries,
 })
+
+var no_acc_19 = pop18_noaccess.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
 
 //Export to Google Drive
 var no_acc_14 = no_acc_14.select(['.*'],null,false);
@@ -89,6 +113,14 @@ var no_acc_14 = no_acc_14.select(['.*'],null,false);
 Export.table.toDrive({
   collection: no_acc_14,
   description: 'no_acc_14',
+  fileFormat: 'CSV',
+});   
+
+var no_acc_15 = no_acc_15.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_15,
+  description: 'no_acc_15',
   fileFormat: 'CSV',
 });   
 
@@ -100,11 +132,27 @@ Export.table.toDrive({
   fileFormat: 'CSV',
 });   
 
+var no_acc_17 = no_acc_17.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_17,
+  description: 'no_acc_17',
+  fileFormat: 'CSV',
+});   
+
 var no_acc_18 = no_acc_18.select(['.*'],null,false);
 
 Export.table.toDrive({
   collection: no_acc_18,
   description: 'no_acc_18',
+  fileFormat: 'CSV',
+});   
+
+var no_acc_19 = no_acc_19.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: no_acc_19,
+  description: 'no_acc_19',
   fileFormat: 'CSV',
 });   
 
@@ -115,12 +163,27 @@ var pop14_exp = pop14.reduceRegions({
     collection: Countries,
 });
 
+var pop15_exp = pop15.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
 var pop16_exp = pop16.reduceRegions({
     reducer: ee.Reducer.sum(),
     collection: Countries,
 });
 
+var pop17_exp = pop17.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
 var pop18_exp = pop18.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
+var pop19_exp = pop19.reduceRegions({
     reducer: ee.Reducer.sum(),
     collection: Countries,
 });
@@ -133,11 +196,27 @@ Export.table.toDrive({
   fileFormat: 'CSV'
 });   
 
+var pop15_exp = pop15_exp.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop15_exp,
+  description: 'pop15',
+  fileFormat: 'CSV'
+});   
+
 var pop16_exp = pop16_exp.select(['.*'],null,false);
 
 Export.table.toDrive({
   collection: pop16_exp,
   description: 'pop16',
+  fileFormat: 'CSV'
+});   
+
+var pop17_exp = pop17_exp.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop17_exp,
+  description: 'pop17',
   fileFormat: 'CSV'
 });   
 
@@ -149,6 +228,13 @@ Export.table.toDrive({
   fileFormat: 'CSV'
 });   
 
+var pop19_exp = pop19_exp.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop19_exp,
+  description: 'pop19',
+  fileFormat: 'CSV'
+});   
 
 //2) Urban / rural distinction
 ///Identify urban and rural areas and define tiers of consumption
@@ -911,10 +997,10 @@ var output = nl17.map(conditional);
 var nl17 = ee.ImageCollection(output).median()
 
 // Apply noise floor and select populated cells
-var pop14_noaccess = pop18.mask(pop18.gt(0).and(nl14.lt(0.05)))
-var pop15_noaccess = pop18.mask(pop18.gt(0).and(nl15.lt(0.05)))
-var pop16_noaccess = pop18.mask(pop18.gt(0).and(nl16.lt(0.05)))
-var pop17_noaccess = pop18.mask(pop18.gt(0).and(nl17.lt(0.05)))
+var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl14.lt(0.05)))
+var pop15_noaccess = pop15.mask(pop15.gt(0).and(nl15.lt(0.05)))
+var pop16_noaccess = pop16.mask(pop16.gt(0).and(nl16.lt(0.05)))
+var pop17_noaccess = pop17.mask(pop17.gt(0).and(nl17.lt(0.05)))
 
 // Import provinces Shapefile
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1').filter(ee.Filter.or(ee.Filter.eq('GID_0', 'COD'), ee.Filter.eq('GID_0', 'ZMB'), ee.Filter.eq('GID_0', 'BFA')))
