@@ -16,7 +16,7 @@ Added support to GHSL and HRSL population datasets and electrification estimates
  
 - Create a Google account, if you do not have one, and require access to Earth Engine https://signup.earthengine.google.com.
 - Make sure your Google Drive has enough cloud storage space available.
-- Either obtain access to the LandScan population data by applying for an account (https://landscan.ornl.gov/user/apply), or use the WorldPop data, which is accessible from the script in this repository without further steps.
+- Either obtain access to the LandScan population data by applying for an account (https://landscan.ornl.gov/user/apply), or use the Global Human Settlement Layers, High Resolution Settlement Layers, or WorldPop datasets, which are accessible from the script in this repository without additional steps.
 - Download the JavaScipt and R scripts and the supporitng files
 - Run the JavaScript file in Google Earth Engine
 - Run the R script, which reproduces the analysis, the validation, the plots contained in the paper, and the output ncdf4 files.
