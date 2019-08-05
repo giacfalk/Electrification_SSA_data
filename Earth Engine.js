@@ -1,7 +1,7 @@
 //Earth Engine Script for: 
 //A Gridded Dataset to Assess Electrification in Sub-Saharan Africa
 //Giacomo Falchetta, Shonali Pachauri, Simon Parkinson, Edward Byers
-// Version: 02/08/19
+// Version: 05/08/19
 
 //Import VIIRS nighttime lights provinces shapefile
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
@@ -12,22 +12,44 @@ var nl17 =  imageCollection.filterDate('2017-01-01', '2018-01-01').select('avg_r
 var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
 var nl19 =  imageCollection.filterDate('2019-01-01', '2020-01-01').select('avg_rad')
 
-//
+// Import provinces/countries borders
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1');
 
-//Import Landscan population (change these lines to change the population dataset to WorldPop)
+// Define sources for gridded population datasets
+var ghsl = ee.ImageCollection('JRC/GHSL/P2016/POP_GPW_GLOBE_V1')
+//var hrsl = ee.ImageCollection('users/giacomofalchetta/hrsl')
+
+//Import population layer (change these lines to change the population dataset to LandScan, WorldPop, HRSL, or GHSL)
 var pop14 = ee.Image('users/giacomofalchetta/landscan2014');
 //var pop14 = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2') 
+//var pop14 = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2') 
+//var pop14 = ee.ImageCollection('users/giacomofalchetta/hrsl')
+
 var pop15 = ee.Image('users/giacomofalchetta/LandScanGlobal2015')
 //var pop15 = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2') 
+//var pop15 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop15 = ee.ImageCollection('users/giacomofalchetta/hrsl')
+
 var pop16 = ee.Image('users/giacomofalchetta/LandScanGlobal2016');
 //var pop16 = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2')
+//var pop16 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop16 = ee.ImageCollection('users/giacomofalchetta/hrsl')
+
 var pop17 = ee.Image('users/giacomofalchetta/LandScanGlobal2017')
-//var pop14 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
+//var pop17 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
+//var pop17 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop17 = ee.ImageCollection('users/giacomofalchetta/hrsl')
+
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 //var pop18 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
+//var pop18 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop18 = ee.ImageCollection('users/giacomofalchetta/hrsl')
+
 var pop19 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
-//var pop20 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
+//var pop19 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
+//var pop19 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop19 = ee.ImageCollection('users/giacomofalchetta/hrsl')
+
 
 // Apply NTL noise floors
 //2014
@@ -236,6 +258,7 @@ Export.table.toDrive({
   fileFormat: 'CSV'
 });   
 
+
 //2) Urban / rural distinction
 ///Identify urban and rural areas and define tiers of consumption
 
@@ -301,7 +324,6 @@ var rurpop5 = pop18_cut.mask(pop18_cut.lte(2500).and(pop18_cut.gt(0)))
 var rurpop = ee.ImageCollection([rurpop0, rurpop1, rurpop2, rurpop3, rurpop4, rurpop5]).mosaic()
 
 //Validate urbanisation rates estimated at the grid cell level
-
 var modis17 = ee.Image("MODIS/006/MCD12Q1/2017_01_01")
 var modis17 = modis17.select('LC_Type2')
 
@@ -731,6 +753,9 @@ Export.table.toDrive({
 var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm36_1');
 var pop17_ls = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 var pop17_wp = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2')
+var pop17_ghsl = ee.ImageCollection('JRC/GHSL/P2016/POP_GPW_GLOBE_V1').filterDate('2015-01-01', '2016-01-01').select('population_count')
+var pop17_ghsl = ee.Image(pop17_ghsl)
+//var pop17_hrsl = ee.ImageCollection('users/giacomofalchetta/hrsl')
 
 var pop17_ls = pop17_ls.reduceRegions({
     reducer: ee.Reducer.sum(),
@@ -758,9 +783,39 @@ Export.table.toDrive({
   fileFormat: 'CSV'
 }); 
 
+//var pop17_hrsl = pop17_hrsl.reduceRegions({
+    //reducer: ee.Reducer.sum(),
+    //collection: Countries,
+//});
+
+//var pop17_hrsl = pop17_hrsl.select(['.*'],null,false);
+
+//Export.table.toDrive({
+  //collection: pop17_hrsl,
+  //description: 'pop17_hrsl',
+  //fileFormat: 'CSV'
+//}); 
+
+var pop17_ghsl = pop17_ghsl.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+});
+
+var pop17_ghsl = pop17_ghsl.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop17_ghsl,
+  description: 'pop17_ghsl',
+  fileFormat: 'CSV'
+}); 
+
 ///
 var pop17_ls = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 var pop17_wp = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2')
+var pop17_ghsl = ee.ImageCollection('JRC/GHSL/P2016/POP_GPW_GLOBE_V1').filterDate('2015-01-01', '2016-01-01').select('population_count')
+var pop17_ghsl = ee.Image(pop17_ghsl)
+//var pop17_hrsl = ee.ImageCollection('users/giacomofalchetta/hrsl')
+
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
 var nl17 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
 
@@ -793,6 +848,9 @@ Export.table.toDrive({
 //
 var pop17_ls = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 var pop17_wp = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2')
+var pop17_ghsl = ee.ImageCollection('JRC/GHSL/P2016/POP_GPW_GLOBE_V1').filterDate('2015-01-01', '2016-01-01').select('population_count')
+var pop17_ghsl = ee.Image(pop17_ghsl)
+//var pop17_hrsl = ee.ImageCollection('users/giacomofalchetta/hrsl')
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
 var nl17 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
 
@@ -821,6 +879,76 @@ Export.table.toDrive({
   description: 'pop17_noaccess_wp',
   fileFormat: 'CSV',
 });   
+
+//
+var pop17_ls = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+var pop17_wp = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2')
+var pop17_ghsl = ee.ImageCollection('JRC/GHSL/P2016/POP_GPW_GLOBE_V1').filterDate('2015-01-01', '2016-01-01').select('population_count')
+var pop17_ghsl = ee.Image(pop17_ghsl)
+//var pop17_hrsl = ee.ImageCollection('users/giacomofalchetta/hrsl')
+var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+var nl17 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
+
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl17.map(conditional);
+
+var nl17 = ee.ImageCollection(output).median()
+
+// Apply noise floor and select populated cells
+var pop17_noaccess_ghsl = pop17_ghsl.mask(pop17_ghsl.gt(0).and(nl17.lt(0.05)))
+
+var pop17_noaccess_ghsl = pop17_noaccess_ghsl.reduceRegions({
+    reducer: ee.Reducer.sum(),
+    collection: Countries,
+})
+
+var pop17_noaccess_ghsl = pop17_noaccess_ghsl.select(['.*'],null,false);
+
+Export.table.toDrive({
+  collection: pop17_noaccess_ghsl,
+  description: 'pop17_noaccess_ghsl',
+  fileFormat: 'CSV',
+});   
+
+//
+var pop17_ls = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
+var pop17_wp = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2')
+var pop17_ghsl = ee.ImageCollection('JRC/GHSL/P2016/POP_GPW_GLOBE_V1').filterDate('2015-01-01', '2016-01-01').select('population_count')
+var pop17_ghsl = ee.Image(pop17_ghsl)
+//var pop17_hrsl = ee.ImageCollection('users/giacomofalchetta/hrsl')
+var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+var nl17 =  imageCollection.filterDate('2016-01-01', '2017-01-01').select('avg_rad')
+
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.25), replacement);
+};
+
+var output = nl17.map(conditional);
+
+var nl17 = ee.ImageCollection(output).median()
+
+// Apply noise floor and select populated cells
+//var pop17_noaccess_hrsl = pop17_hrsl.mask(pop17_hrsl.gt(0).and(nl17.lt(0.05)))
+
+//var pop17_noaccess_hrsl = pop17_noaccess_hrsl.reduceRegions({
+    //reducer: ee.Reducer.sum(),
+    //collection: Countries,
+//})
+
+//var pop17_noaccess_hrsl = pop17_noaccess_hrsl.select(['.*'],null,false);
+
+//Export.table.toDrive({
+  //collection: pop17_noaccess_hrsl,
+  //description: 'pop17_noaccess_hrsl',
+  //fileFormat: 'CSV',
+//});   
 
 
 //Carry out sensitivity analysis for noise floor
@@ -1360,8 +1488,28 @@ Export.table.toDrive({
   fileFormat: 'CSV'
 }); 
 
-// Export dataset 2014-2018
+
+
+
+
+// Export dataset 2014-2019
 var imageCollection = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG");
+
+var nl19 =  imageCollection.filterDate('2019-01-01', '2020-01-01').select('avg_rad')
+var replacement = ee.Image(0);
+    
+var conditional = function(image) {
+  return image.where(image.lt(0.35), replacement);
+};
+
+var output = nl19.map(conditional);
+
+var nl19 = ee.ImageCollection(output).median()
+
+var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Filter.or(ee.Filter.eq('REGION', 2)));
+
+var pop19_noaccess = pop19.mask(pop19.gt(0).and(nl19.lt(0.01))).clip(Countries)
+
 var nl18 =  imageCollection.filterDate('2018-01-01', '2019-01-01').select('avg_rad')
 var replacement = ee.Image(0);
     
@@ -1440,7 +1588,7 @@ var Countries = ee.FeatureCollection('users/giacomofalchetta/gadm').filter(ee.Fi
 
 var pop14_noaccess = pop14.mask(pop14.gt(0).and(nl14.lt(0.01))).clip(Countries)
 
-var pop_noaccess = ee.ImageCollection([pop14_noaccess, pop15_noaccess, pop16_noaccess, pop17_noaccess, pop18_noaccess])
+var pop_noaccess = ee.ImageCollection([pop14_noaccess, pop15_noaccess, pop16_noaccess, pop17_noaccess, pop18_noaccess, pop19_noaccess])
 
 var stackCollection = function(collection) {
   // Create an initial image.
