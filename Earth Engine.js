@@ -22,32 +22,32 @@ var ghsl = ee.ImageCollection('JRC/GHSL/P2016/POP_GPW_GLOBE_V1')
 //Import population layer (change these lines to change the population dataset to LandScan, WorldPop, HRSL, or GHSL)
 var pop14 = ee.Image('users/giacomofalchetta/landscan2014');
 //var pop14 = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2') 
-//var pop14 = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2') 
+//var pop14 = ghsl.filterDate('2015-01-01', '2016-01-01').select('population_count') 
 //var pop14 = ee.ImageCollection('users/giacomofalchetta/hrsl')
 
 var pop15 = ee.Image('users/giacomofalchetta/LandScanGlobal2015')
 //var pop15 = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2') 
-//var pop15 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop15 = ghsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
 //var pop15 = ee.ImageCollection('users/giacomofalchetta/hrsl')
 
 var pop16 = ee.Image('users/giacomofalchetta/LandScanGlobal2016');
 //var pop16 = ee.Image('users/giacomofalchetta/AFR_PPP_2015_adj_v2')
-//var pop16 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop16 = ghsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
 //var pop16 = ee.ImageCollection('users/giacomofalchetta/hrsl')
 
 var pop17 = ee.Image('users/giacomofalchetta/LandScanGlobal2017')
 //var pop17 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
-//var pop17 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop17 = ghsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
 //var pop17 = ee.ImageCollection('users/giacomofalchetta/hrsl')
 
 var pop18 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 //var pop18 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
-//var pop18 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop18 = ghsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
 //var pop18 = ee.ImageCollection('users/giacomofalchetta/hrsl')
 
 var pop19 = ee.Image('users/giacomofalchetta/LandScanGlobal2017');
 //var pop19 = ee.Image('users/giacomofalchetta/AFR_PPP_2020_adj_v2') 
-//var pop19 = hrsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
+//var pop19 = ghsl.filterDate('2015-01-01', '2016-01-01').select('population_count')
 //var pop19 = ee.ImageCollection('users/giacomofalchetta/hrsl')
 
 
